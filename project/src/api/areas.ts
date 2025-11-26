@@ -1,18 +1,42 @@
 import api from "./client";
-import { KathmanduArea, Service, ShortestRouteResult } from "../types";
+
+export interface KathmanduArea {
+  name: string;
+  slug: string;
+  district: string;
+  coordinates: {
+    lat: number;
+    lng: number;
+  };
+  tags?: string[];
+  adjacency?: Array<{
+    to: string;
+    distanceKm: number;
+  }>;
+}
 
 export const areasApi = {
-  listAreas: () => api.get<{ success: boolean; areas: KathmanduArea[] }>("/areas"),
+  // Get all Kathmandu areas
+  getAll: () =>
+    api.get<{ success: boolean; areas: KathmanduArea[] }>("/areas"),
 
-  getAreaServices: (
+  // Get services by area
+  getServicesByArea: (
     slug: string,
-    params?: { radiusKm?: number; category?: string; onlyReviewed?: boolean; cvQualified?: boolean }
-  ) => api.get<{ success: boolean; area: KathmanduArea; services: Service[] }>(
-      `/areas/${slug}/services`,
-      { params }
-    ),
+    params?: {
+      radiusKm?: number;
+      category?: string;
+      onlyReviewed?: boolean;
+      cvQualified?: boolean;
+    }
+  ) => {
+    const queryParams = new URLSearchParams();
+    if (params?.radiusKm) queryParams.append("radiusKm", params.radiusKm.toString());
+    if (params?.category) queryParams.append("category", params.category);
+    if (params?.onlyReviewed) queryParams.append("onlyReviewed", "true");
+    if (params?.cvQualified) queryParams.append("cvQualified", "true");
 
-  getShortestRoute: (payload: { from: string; to: string }) =>
-    api.post<{ success: boolean; route: ShortestRouteResult }>("/routes/shortest", payload),
+    const queryString = queryParams.toString();
+    return api.get(`/areas/${slug}/services${queryString ? `?${queryString}` : ""}`);
+  },
 };
-

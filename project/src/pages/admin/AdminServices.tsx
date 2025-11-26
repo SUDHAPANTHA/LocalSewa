@@ -4,15 +4,7 @@ import { adminApi } from "../../api/admin";
 import { Service } from "../../types";
 import { useToast } from "../../components/Toast";
 import { Modal } from "../../components/Modal";
-import {
-  Edit,
-  Trash2,
-  DollarSign,
-  User,
-  Search,
-  Star,
-  Tag,
-} from "lucide-react";
+import { Edit, Trash2, User, Search, Star, Tag } from "lucide-react";
 import { getApiErrorMessage } from "../../utils/errors";
 
 export function AdminServices() {
@@ -220,9 +212,7 @@ export function AdminServices() {
         )}
         <div className="flex flex-col gap-4 mb-8 sm:flex-row sm:items-center sm:justify-between">
           <div>
-            <h1 className="text-4xl font-bold text-gray-900">
-              Review Services
-            </h1>
+            <h1 className="text-4xl font-bold text-gray-900">View Services</h1>
             <p className="text-gray-600">
               Audit, edit, or remove vendor services
             </p>
@@ -269,7 +259,7 @@ export function AdminServices() {
                         {service.name}
                       </h3>
                       <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-green-50 text-green-700 text-sm font-semibold">
-                        <DollarSign className="w-4 h-4" />${service.price}
+                        NPR {service.price}
                       </span>
                     </div>
                     <p className="text-xs text-gray-500 uppercase tracking-[0.4em]">
@@ -373,7 +363,7 @@ export function AdminServices() {
             <div className="grid grid-cols-2 gap-3">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Price ($)
+                  Price (NPR)
                 </label>
                 <input
                   type="number"

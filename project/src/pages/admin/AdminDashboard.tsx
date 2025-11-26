@@ -54,7 +54,9 @@ export function AdminDashboard() {
     try {
       const [providersRes, bookingsRes, usersRes, servicesRes] =
         await Promise.all([
-          withRetry((signal) => adminApi.getAllProviders(undefined, { signal })),
+          withRetry((signal) =>
+            adminApi.getAllProviders(undefined, { signal })
+          ),
           withRetry((signal) => bookingsApi.adminGetAllBookings({ signal })),
           withRetry((signal) => adminApi.getAllUsers({ signal })),
           withRetry((signal) => adminApi.getAllServices({ signal })),
@@ -238,7 +240,7 @@ export function AdminDashboard() {
           >
             <Layers className="w-12 h-12 text-purple-600 mb-4" />
             <h3 className="text-xl font-bold text-gray-800 mb-2">
-              Review Services
+              View Services
             </h3>
             <p className="text-gray-600">
               Audit vendor services and take action

@@ -3,12 +3,21 @@ import { Layout } from "../../components/Layout";
 import { useAuth } from "../../context/AuthContext";
 import { servicesApi } from "../../api/services";
 import { bookingsApi } from "../../api/bookings";
+import { areasApi, KathmanduArea } from "../../api/areas";
 import { Service } from "../../types";
 import { useToast } from "../../components/Toast";
 import { Modal } from "../../components/Modal";
 import { getApiErrorMessage } from "../../utils/errors";
 import { formatNpr } from "../../utils/currency";
-import { Search, Star, Clock, Loader2 } from "lucide-react";
+import {
+  Search,
+  Star,
+  Clock,
+  Loader2,
+  MapPin,
+  AlertCircle,
+} from "lucide-react";
+import { LocalityAutocomplete } from "../../components/LocalityAutocomplete";
 
 const HARDCODED_SERVICES = [
   {
@@ -21,6 +30,17 @@ const HARDCODED_SERVICES = [
     rating: 4.5,
     bookingCount: 45,
     isHardcoded: true,
+    locality: "Tinkune",
+    localitySlug: "tinkune",
+    provider: {
+      _id: "demo-provider-1",
+      name: "Tinkune Plumbing Services",
+      email: "demo@tinkune.com",
+      services: [],
+      isApproved: true,
+      primaryAreaName: "Tinkune",
+      primaryAreaSlug: "tinkune",
+    },
   },
   {
     _id: "hc2",
@@ -32,6 +52,17 @@ const HARDCODED_SERVICES = [
     rating: 4.7,
     bookingCount: 38,
     isHardcoded: true,
+    locality: "Koteshwor",
+    localitySlug: "koteshwor",
+    provider: {
+      _id: "demo-provider-2",
+      name: "Koteshwor Electricians",
+      email: "demo@koteshwor.com",
+      services: [],
+      isApproved: true,
+      primaryAreaName: "Koteshwor",
+      primaryAreaSlug: "koteshwor",
+    },
   },
   {
     _id: "hc3",
@@ -43,6 +74,17 @@ const HARDCODED_SERVICES = [
     rating: 4.6,
     bookingCount: 52,
     isHardcoded: true,
+    locality: "Baneshwor",
+    localitySlug: "baneshwor",
+    provider: {
+      _id: "demo-provider-3",
+      name: "Baneshwor Cleaning Squad",
+      email: "demo@baneshwor.com",
+      services: [],
+      isApproved: true,
+      primaryAreaName: "Baneshwor",
+      primaryAreaSlug: "baneshwor",
+    },
   },
   {
     _id: "hc4",
@@ -54,6 +96,17 @@ const HARDCODED_SERVICES = [
     rating: 4.8,
     bookingCount: 41,
     isHardcoded: true,
+    locality: "Chabahil",
+    localitySlug: "chabahil",
+    provider: {
+      _id: "demo-provider-4",
+      name: "Chabahil AC Services",
+      email: "demo@chabahil.com",
+      services: [],
+      isApproved: true,
+      primaryAreaName: "Chabahil",
+      primaryAreaSlug: "chabahil",
+    },
   },
   {
     _id: "hc5",
@@ -65,6 +118,17 @@ const HARDCODED_SERVICES = [
     rating: 4.4,
     bookingCount: 29,
     isHardcoded: true,
+    locality: "Kalanki",
+    localitySlug: "kalanki",
+    provider: {
+      _id: "demo-provider-5",
+      name: "Kalanki Painters",
+      email: "demo@kalanki.com",
+      services: [],
+      isApproved: true,
+      primaryAreaName: "Kalanki",
+      primaryAreaSlug: "kalanki",
+    },
   },
   {
     _id: "hc6",
@@ -76,6 +140,17 @@ const HARDCODED_SERVICES = [
     rating: 4.5,
     bookingCount: 33,
     isHardcoded: true,
+    locality: "Thamel",
+    localitySlug: "thamel",
+    provider: {
+      _id: "demo-provider-6",
+      name: "Thamel Movers",
+      email: "demo@thamel.com",
+      services: [],
+      isApproved: true,
+      primaryAreaName: "Thamel",
+      primaryAreaSlug: "thamel",
+    },
   },
   {
     _id: "hc7",
@@ -87,6 +162,17 @@ const HARDCODED_SERVICES = [
     rating: 4.6,
     bookingCount: 47,
     isHardcoded: true,
+    locality: "Boudha",
+    localitySlug: "boudha",
+    provider: {
+      _id: "demo-provider-7",
+      name: "Boudha Handyman",
+      email: "demo@boudha.com",
+      services: [],
+      isApproved: true,
+      primaryAreaName: "Boudha",
+      primaryAreaSlug: "boudha",
+    },
   },
   {
     _id: "hc8",
@@ -98,6 +184,17 @@ const HARDCODED_SERVICES = [
     rating: 4.3,
     bookingCount: 25,
     isHardcoded: true,
+    locality: "Baluwatar",
+    localitySlug: "baluwatar",
+    provider: {
+      _id: "demo-provider-8",
+      name: "Baluwatar Gardens",
+      email: "demo@baluwatar.com",
+      services: [],
+      isApproved: true,
+      primaryAreaName: "Baluwatar",
+      primaryAreaSlug: "baluwatar",
+    },
   },
   {
     _id: "hc9",
@@ -109,6 +206,17 @@ const HARDCODED_SERVICES = [
     rating: 4.7,
     bookingCount: 31,
     isHardcoded: true,
+    locality: "Lazimpat",
+    localitySlug: "lazimpat",
+    provider: {
+      _id: "demo-provider-9",
+      name: "Lazimpat Security Systems",
+      email: "demo@lazimpat.com",
+      services: [],
+      isApproved: true,
+      primaryAreaName: "Lazimpat",
+      primaryAreaSlug: "lazimpat",
+    },
   },
   {
     _id: "hc10",
@@ -120,6 +228,17 @@ const HARDCODED_SERVICES = [
     rating: 4.9,
     bookingCount: 56,
     isHardcoded: true,
+    locality: "Jawalakhel",
+    localitySlug: "jawalakhel",
+    provider: {
+      _id: "demo-provider-10",
+      name: "Jawalakhel Wellness Center",
+      email: "demo@jawalakhel.com",
+      services: [],
+      isApproved: true,
+      primaryAreaName: "Jawalakhel",
+      primaryAreaSlug: "jawalakhel",
+    },
   },
   {
     _id: "hc11",
@@ -131,6 +250,17 @@ const HARDCODED_SERVICES = [
     rating: 4.5,
     bookingCount: 22,
     isHardcoded: true,
+    locality: "Sanepa",
+    localitySlug: "sanepa",
+    provider: {
+      _id: "demo-provider-11",
+      name: "Sanepa Carpenters",
+      email: "demo@sanepa.com",
+      services: [],
+      isApproved: true,
+      primaryAreaName: "Sanepa",
+      primaryAreaSlug: "sanepa",
+    },
   },
   {
     _id: "hc12",
@@ -142,6 +272,17 @@ const HARDCODED_SERVICES = [
     rating: 4.4,
     bookingCount: 28,
     isHardcoded: true,
+    locality: "Balaju",
+    localitySlug: "balaju",
+    provider: {
+      _id: "demo-provider-12",
+      name: "Balaju Pest Control",
+      email: "demo@balaju.com",
+      services: [],
+      isApproved: true,
+      primaryAreaName: "Balaju",
+      primaryAreaSlug: "balaju",
+    },
   },
   {
     _id: "hc13",
@@ -153,6 +294,17 @@ const HARDCODED_SERVICES = [
     rating: 4.6,
     bookingCount: 19,
     isHardcoded: true,
+    locality: "Maharajgunj",
+    localitySlug: "maharajgunj",
+    provider: {
+      _id: "demo-provider-13",
+      name: "Maharajgunj Tank Services",
+      email: "demo@maharajgunj.com",
+      services: [],
+      isApproved: true,
+      primaryAreaName: "Maharajgunj",
+      primaryAreaSlug: "maharajgunj",
+    },
   },
   {
     _id: "hc14",
@@ -164,6 +316,17 @@ const HARDCODED_SERVICES = [
     rating: 4.8,
     bookingCount: 15,
     isHardcoded: true,
+    locality: "Swayambhu",
+    localitySlug: "swayambhu",
+    provider: {
+      _id: "demo-provider-14",
+      name: "Swayambhu Solar Solutions",
+      email: "demo@swayambhu.com",
+      services: [],
+      isApproved: true,
+      primaryAreaName: "Swayambhu",
+      primaryAreaSlug: "swayambhu",
+    },
   },
   {
     _id: "hc15",
@@ -175,6 +338,17 @@ const HARDCODED_SERVICES = [
     rating: 4.5,
     bookingCount: 42,
     isHardcoded: true,
+    locality: "Maitighar",
+    localitySlug: "maitighar",
+    provider: {
+      _id: "demo-provider-15",
+      name: "Maitighar Laundry",
+      email: "demo@maitighar.com",
+      services: [],
+      isApproved: true,
+      primaryAreaName: "Maitighar",
+      primaryAreaSlug: "maitighar",
+    },
   },
 ];
 
@@ -196,6 +370,11 @@ export function Services() {
   const { showToast, ToastComponent } = useToast();
   const [vendorServices, setVendorServices] = useState<Service[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
+  const [selectedLocality, setSelectedLocality] = useState("");
+  const [selectedArea, setSelectedArea] = useState<KathmanduArea | null>(null);
+  const [localityServices, setLocalityServices] = useState<any[]>([]);
+  const [nearbyServices, setNearbyServices] = useState<any[]>([]);
+  const [showingNearby, setShowingNearby] = useState(false);
   const [loading, setLoading] = useState(true);
   const [selectedService, setSelectedService] = useState<Service | null>(null);
   const [scheduledDate, setScheduledDate] = useState("");
@@ -208,20 +387,20 @@ export function Services() {
 
     const fetchVendorServices = async () => {
       if (!isMounted) return;
-      
+
       setLoading(true);
-      
+
       try {
         const response = await servicesApi.getAllServices(
           {},
           { signal: controller.signal }
         );
-        
+
         if (!isMounted) return;
-        
+
         // Backend returns: { success: true, data: { services: [...], ... }, message: "..." }
         const responseData = response.data;
-        
+
         // Handle both direct response and nested data
         let services = [];
         if (responseData) {
@@ -233,7 +412,7 @@ export function Services() {
             services = responseData.services;
           }
         }
-        
+
         // Filter only approved vendor services (not core/hardcoded)
         // Provider must be approved to show services
         const approved = services.filter(
@@ -243,22 +422,25 @@ export function Services() {
             typeof svc.provider === "object" &&
             svc.provider.isApproved === true
         );
-        
+
         if (isMounted) {
           setVendorServices(approved);
         }
       } catch (error: any) {
         if (!isMounted) return;
-        
+
         // Don't show error if request was cancelled
-        if (error.name === 'CanceledError' || error.code === 'ERR_CANCELED') {
+        if (error.name === "CanceledError" || error.code === "ERR_CANCELED") {
           return;
         }
-        
+
         console.error("Failed to fetch services:", error);
-        
+
         // Check if it's a timeout error
-        if (error.code === 'ECONNABORTED' || error.message?.includes('timeout')) {
+        if (
+          error.code === "ECONNABORTED" ||
+          error.message?.includes("timeout")
+        ) {
           showToast(
             "Request timed out. Please check your connection and try again.",
             "error"
@@ -269,7 +451,7 @@ export function Services() {
             "error"
           );
         }
-        
+
         if (isMounted) {
           setVendorServices([]);
         }
@@ -288,19 +470,113 @@ export function Services() {
     };
   }, []); // Empty dependency array - only run once on mount
 
-  // Combine vendor services (on top) with hardcoded services
-  const allServices = [...vendorServices, ...HARDCODED_SERVICES];
+  // Fetch services by locality when area is selected
+  useEffect(() => {
+    if (!selectedArea) {
+      setLocalityServices([]);
+      setNearbyServices([]);
+      setShowingNearby(false);
+      return;
+    }
 
-  // Filter services based on search query
-  const filteredServices = allServices.filter((service) => {
-    if (!searchQuery.trim()) return true;
-    const query = searchQuery.toLowerCase();
-    return (
-      service.name.toLowerCase().includes(query) ||
-      service.description.toLowerCase().includes(query) ||
-      service.category.toLowerCase().includes(query)
+    const fetchLocalityServices = async () => {
+      try {
+        const response = await areasApi.getServicesByArea(selectedArea.slug, {
+          radiusKm: 3, // Start with 3km radius
+        });
+
+        const services = response.data.services || [];
+        setLocalityServices(services);
+
+        // If no services in the area, fetch nearby alternatives
+        if (services.length === 0) {
+          const nearbyResponse = await areasApi.getServicesByArea(
+            selectedArea.slug,
+            {
+              radiusKm: 10, // Expand to 10km for nearby
+            }
+          );
+          setNearbyServices(nearbyResponse.data.services || []);
+        } else {
+          setNearbyServices([]);
+        }
+      } catch (error) {
+        console.error("Failed to fetch locality services:", error);
+        showToast("Failed to load services for this area", "error");
+      }
+    };
+
+    fetchLocalityServices();
+  }, [selectedArea, showToast]);
+
+  // Recommendation Algorithm: Sort services by relevance
+  const getRecommendationScore = (service: any) => {
+    let score = 0;
+
+    // 1. Rating weight (40%)
+    const ratingScore = (service.rating || 4.5) / 5;
+    score += ratingScore * 0.4;
+
+    // 2. Popularity weight (30%) - based on booking count
+    const maxBookings = 100; // Normalize to 100 bookings
+    const popularityScore = Math.min(
+      (service.bookingCount || 0) / maxBookings,
+      1
     );
-  });
+    score += popularityScore * 0.3;
+
+    // 3. Vendor priority (20%) - vendor services ranked higher
+    const vendorBonus = !service.isHardcoded ? 0.2 : 0;
+    score += vendorBonus;
+
+    // 4. Locality match (10%) - if user selected a locality
+    if (selectedArea && (service as any).localitySlug === selectedArea.slug) {
+      score += 0.1;
+    }
+
+    return score;
+  };
+
+  // Combine vendor services (on top) with hardcoded services, then sort by recommendation
+  const allServices = [...vendorServices, ...HARDCODED_SERVICES].sort(
+    (a, b) => {
+      const scoreA = getRecommendationScore(a);
+      const scoreB = getRecommendationScore(b);
+      return scoreB - scoreA; // Higher score first
+    }
+  );
+
+  // Filter services based on search query and locality
+  let filteredServices = allServices;
+
+  // If locality is selected, show locality-specific services
+  if (selectedArea) {
+    if (localityServices.length > 0) {
+      // Show API services from the locality
+      filteredServices = localityServices;
+    } else if (showingNearby && nearbyServices.length > 0) {
+      // Show nearby API services
+      filteredServices = nearbyServices;
+    } else {
+      // No API services, filter hardcoded services by locality
+      filteredServices = HARDCODED_SERVICES.filter(
+        (service: any) => service.localitySlug === selectedArea.slug
+      );
+    }
+  } else {
+    // No locality selected, filter by search query
+    filteredServices = allServices.filter((service) => {
+      if (!searchQuery.trim()) return true;
+      const query = searchQuery.toLowerCase();
+      const nameMatch = service.name.toLowerCase().includes(query);
+      const descMatch = service.description.toLowerCase().includes(query);
+      const catMatch = service.category.toLowerCase().includes(query);
+      const localityMatch = (service as any).locality
+        ?.toLowerCase()
+        .includes(query);
+      return nameMatch || descMatch || catMatch || localityMatch;
+    });
+  }
 
   const handleBooking = async () => {
     if (!user) {
@@ -313,15 +589,7 @@ export function Services() {
       return;
     }
 
-    // Don't allow booking hardcoded services
-    if (selectedService.isHardcoded) {
-      showToast(
-        "This is a demo service. Please contact the provider directly.",
-        "info"
-      );
-      return;
-    }
-
+    // Get provider ID (works for both hardcoded and vendor services)
     const providerId =
       typeof selectedService.provider === "string"
         ? selectedService.provider
@@ -367,26 +635,27 @@ export function Services() {
         bookingDate,
         bookingTime,
       });
-      
+
       console.log("Booking response:", response.data);
-      
+
       // Backend returns: { msg: "...", booking: { confirmationCode: "..." } }
       const responseData = response.data as any;
       const confirmation = responseData?.booking?.confirmationCode || "pending";
-      
+
       showToast(`Booking received! Confirmation ${confirmation}`, "success");
       setSelectedService(null);
       setScheduledDate("");
     } catch (error: any) {
       console.error("Booking error:", error);
       console.error("Error response:", error.response?.data);
-      
+
       // Show specific error message from backend
-      const errorMessage = error.response?.data?.msg || 
-                          error.response?.data?.message || 
-                          error.message || 
-                          "Booking failed";
-      
+      const errorMessage =
+        error.response?.data?.msg ||
+        error.response?.data?.message ||
+        error.message ||
+        "Booking failed";
+
       showToast(errorMessage, "error");
     } finally {
       setBookingLoading(false);
@@ -409,7 +678,7 @@ export function Services() {
         </header>
 
         {/* Search Bar */}
-        <div className="bg-white rounded-2xl shadow-lg p-6">
+        <div className="bg-white rounded-2xl shadow-lg p-6 space-y-4">
           <div className="relative">
             <Search className="w-5 h-5 text-slate-400 absolute left-4 top-3.5" />
             <input
@@ -420,13 +689,61 @@ export function Services() {
               className="w-full pl-12 pr-4 py-3 border border-slate-200 rounded-xl focus:ring-2 focus:ring-sky-400 focus:outline-none"
             />
           </div>
+
+          {/* Locality Search */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              <MapPin className="w-4 h-4 inline mr-1" />
+              Search by Locality
+            </label>
+            <LocalityAutocomplete
+              value={selectedLocality}
+              onChange={(value, area) => {
+                setSelectedLocality(value);
+                setSelectedArea(area);
+                setShowingNearby(false);
+              }}
+              placeholder="Select Kathmandu locality (e.g., Tinkune, Baneshwor)..."
+            />
+          </div>
         </div>
+
+        {/* No Services in Area - Show Nearby */}
+        {selectedArea &&
+          localityServices.length === 0 &&
+          nearbyServices.length > 0 &&
+          !showingNearby && (
+            <div className="bg-amber-50 border border-amber-200 rounded-2xl p-6">
+              <div className="flex items-start gap-4">
+                <AlertCircle className="w-6 h-6 text-amber-600 flex-shrink-0 mt-1" />
+                <div className="flex-1">
+                  <h3 className="text-lg font-semibold text-amber-900 mb-2">
+                    No services available in {selectedArea.name}
+                  </h3>
+                  <p className="text-amber-700 mb-4">
+                    We found {nearbyServices.length} services in nearby areas.
+                    Would you like to see them?
+                  </p>
+                  <button
+                    onClick={() => setShowingNearby(true)}
+                    className="px-6 py-2 bg-amber-600 text-white rounded-lg font-medium hover:bg-amber-700 transition"
+                  >
+                    Show services near this area
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
 
         {/* Services List */}
         <section>
           <div className="flex items-center justify-between mb-6">
             <h2 className="text-2xl font-bold text-slate-900">
-              Available Services
+              {selectedArea && showingNearby
+                ? `Services near ${selectedArea.name}`
+                : selectedArea
+                ? `Services in ${selectedArea.name}`
+                : "Available Services"}
             </h2>
             <span className="text-sm text-slate-500">
               {filteredServices.length} services found
@@ -440,7 +757,9 @@ export function Services() {
             </div>
           ) : filteredServices.length === 0 ? (
             <div className="bg-white rounded-2xl shadow p-8 text-center text-slate-500">
-              No services match your search.
+              {selectedArea
+                ? `No services available in ${selectedArea.name} or nearby areas.`
+                : "No services match your search."}
             </div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
@@ -475,7 +794,7 @@ export function Services() {
                     </div>
                   </div>
 
-                  <div className="flex items-center gap-4 text-sm text-slate-600">
+                  <div className="flex items-center gap-4 text-sm text-slate-600 flex-wrap">
                     <span className="flex items-center gap-1">
                       <Star className="w-4 h-4 text-amber-400" />
                       {service.rating?.toFixed(1) || "4.5"}
@@ -484,6 +803,12 @@ export function Services() {
                       <Clock className="w-4 h-4 text-slate-400" />
                       {service.bookingCount || 0} bookings
                     </span>
+                    {(service as any).locality && (
+                      <span className="flex items-center gap-1">
+                        <MapPin className="w-4 h-4 text-blue-500" />
+                        {(service as any).locality}
+                      </span>
+                    )}
                   </div>
 
                   <div className="flex items-center justify-between mt-auto pt-4 border-t border-slate-100">
@@ -495,9 +820,9 @@ export function Services() {
                     </div>
                     <button
                       onClick={() => setSelectedService(service)}
-                      className="px-4 py-2 rounded-xl bg-slate-900 text-white font-semibold hover:bg-slate-800"
+                      className="px-4 py-2 rounded-xl bg-blue-600 text-white font-semibold hover:bg-blue-700 transition"
                     >
-                      {service.isHardcoded ? "View Details" : "Book Now"}
+                      Book Now
                     </button>
                   </div>
                 </article>

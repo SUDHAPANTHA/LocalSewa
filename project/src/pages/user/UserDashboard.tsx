@@ -3,7 +3,7 @@ import { Layout } from "../../components/Layout";
 import { useAuth } from "../../context/AuthContext";
 import { bookingsApi } from "../../api/bookings";
 import { Booking } from "../../types";
-import { Calendar, CheckCircle, Clock, Shield } from "lucide-react";
+import { Calendar, CheckCircle, Clock, Shield, Search, MessageCircle, Sparkles, TrendingUp, Package } from "lucide-react";
 
 export function UserDashboard() {
   const { user } = useAuth();
@@ -100,96 +100,174 @@ export function UserDashboard() {
 
   const filteredBookings = bookings.filter((b) => b.status !== "cancelled");
 
+  const stats = {
+    total: bookings.length,
+    pending: bookings.filter(b => b.status === 'pending').length,
+    completed: bookings.filter(b => b.status === 'completed').length,
+  };
+
   return (
     <Layout>
-      <div className="max-w-6xl mx-auto animate-fade-in px-4 py-6">
-        <div className="bg-gradient-to-r from-blue-600 to-cyan-500 text-white rounded-3xl shadow-2xl p-8 mb-8">
-          <h1 className="text-4xl sm:text-5xl font-bold mb-2">
-            Welcome, {user?.name}!
-          </h1>
-          <p className="text-blue-100 text-lg">
-            Manage your bookings and explore available services
-          </p>
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-          <a
-            href="#/user/services"
-            className="bg-white rounded-2xl shadow-lg p-6 hover:shadow-2xl transition-all transform hover:-translate-y-1"
-          >
-            <h3 className="text-xl font-bold text-gray-800 mb-2">
-              Browse Services
-            </h3>
-            <p className="text-gray-600">Explore available services</p>
-          </a>
-
-          <a
-            href="#/user/bookings"
-            className="bg-white rounded-2xl shadow-lg p-6 hover:shadow-2xl transition-all transform hover:-translate-y-1"
-          >
-            <h3 className="text-xl font-bold text-gray-800 mb-2">
-              My Bookings
-            </h3>
-            <p className="text-gray-600">
-              {filteredBookings.length} active bookings
-            </p>
-          </a>
-
-          <a
-            href="#/user/chat"
-            className="bg-white rounded-2xl shadow-lg p-6 hover:shadow-2xl transition-all transform hover:-translate-y-1"
-          >
-            <h3 className="text-xl font-bold text-gray-800 mb-2">Messages</h3>
-            <p className="text-gray-600">Chat with service providers</p>
-          </a>
-        </div>
-
-        <div className="bg-white rounded-3xl shadow-2xl p-8">
-          <h2 className="text-2xl font-bold text-gray-800 mb-6">
-            Recent Bookings
-          </h2>
-
-          {loading ? (
-            <p className="text-gray-600">Loading...</p>
-          ) : filteredBookings.length === 0 ? (
-            <p className="text-gray-600">
-              No recent bookings. Browse services to get started!
-            </p>
-          ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {filteredBookings.slice(0, 6).map((booking) => (
-                <div
-                  key={booking._id}
-                  className="relative border border-gray-200 rounded-2xl p-6 hover:shadow-xl transition bg-gradient-to-tr from-white to-slate-50"
-                >
-                  <div className="flex items-center justify-between mb-2">
-                    <h3 className="font-bold text-gray-800 text-lg">
-                      {typeof booking.service === "object"
-                        ? booking.service.name
-                        : "Service"}
-                    </h3>
-                    {getStatusBadge(booking)}
-                  </div>
-                  <p className="flex items-center gap-2 text-gray-600 mb-1">
-                    <Calendar className="w-4 h-4" />
-                    {formatScheduledDate(
-                      booking.bookingDate,
-                      booking.bookingTime
-                    )}
-                  </p>
-                  <p className="text-sm text-gray-500 mt-2">
-                    Provider:{" "}
-                    {typeof booking.provider === "object"
-                      ? booking.provider.name
-                      : "Provider"}
-                  </p>
-                  <p className="text-xs text-gray-400">
-                    Code: {booking.confirmationCode || "Pending"}
-                  </p>
+      <div className="min-h-screen bg-gradient-to-br from-purple-50 via-blue-50 to-cyan-50">
+        <div className="max-w-7xl mx-auto px-4 py-8 space-y-8">
+          {/* Hero Section */}
+          <div className="relative overflow-hidden bg-gradient-to-br from-purple-600 via-blue-600 to-cyan-500 rounded-3xl shadow-2xl p-8 md:p-12">
+            <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full -mr-32 -mt-32"></div>
+            <div className="absolute bottom-0 left-0 w-48 h-48 bg-white/10 rounded-full -ml-24 -mb-24"></div>
+            <div className="relative z-10">
+              <div className="flex items-center gap-3 mb-4">
+                <div className="w-12 h-12 bg-white/20 rounded-full flex items-center justify-center backdrop-blur-sm">
+                  <Sparkles className="w-6 h-6 text-white" />
                 </div>
-              ))}
+                <h1 className="text-4xl md:text-5xl font-black text-white">
+                  Welcome back, {user?.name}!
+                </h1>
+              </div>
+              <p className="text-white/90 text-lg md:text-xl max-w-2xl">
+                Discover amazing services and manage your bookings all in one place
+              </p>
             </div>
-          )}
+          </div>
+
+          {/* Stats Cards */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div className="bg-gradient-to-br from-purple-500 to-purple-600 rounded-2xl shadow-xl p-6 text-white transform hover:scale-105 transition">
+              <div className="flex items-center justify-between mb-4">
+                <Package className="w-10 h-10 opacity-80" />
+                <span className="text-4xl font-black">{stats.total}</span>
+              </div>
+              <h3 className="text-lg font-semibold opacity-90">Total Bookings</h3>
+            </div>
+
+            <div className="bg-gradient-to-br from-amber-400 to-orange-500 rounded-2xl shadow-xl p-6 text-white transform hover:scale-105 transition">
+              <div className="flex items-center justify-between mb-4">
+                <Clock className="w-10 h-10 opacity-80" />
+                <span className="text-4xl font-black">{stats.pending}</span>
+              </div>
+              <h3 className="text-lg font-semibold opacity-90">Pending</h3>
+            </div>
+
+            <div className="bg-gradient-to-br from-emerald-400 to-green-500 rounded-2xl shadow-xl p-6 text-white transform hover:scale-105 transition">
+              <div className="flex items-center justify-between mb-4">
+                <CheckCircle className="w-10 h-10 opacity-80" />
+                <span className="text-4xl font-black">{stats.completed}</span>
+              </div>
+              <h3 className="text-lg font-semibold opacity-90">Completed</h3>
+            </div>
+          </div>
+
+          {/* Quick Actions */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <a
+              href="#/user/services"
+              className="group bg-white rounded-2xl shadow-lg p-8 hover:shadow-2xl transition-all transform hover:-translate-y-2"
+            >
+              <div className="w-16 h-16 bg-gradient-to-br from-purple-100 to-blue-100 rounded-2xl flex items-center justify-center mb-4 group-hover:scale-110 transition">
+                <Search className="w-8 h-8 text-purple-600" />
+              </div>
+              <h3 className="text-2xl font-bold text-gray-800 mb-2">
+                Browse Services
+              </h3>
+              <p className="text-gray-600">Discover and book amazing services</p>
+            </a>
+
+            <a
+              href="#/user/bookings"
+              className="group bg-white rounded-2xl shadow-lg p-8 hover:shadow-2xl transition-all transform hover:-translate-y-2"
+            >
+              <div className="w-16 h-16 bg-gradient-to-br from-blue-100 to-cyan-100 rounded-2xl flex items-center justify-center mb-4 group-hover:scale-110 transition">
+                <Calendar className="w-8 h-8 text-blue-600" />
+              </div>
+              <h3 className="text-2xl font-bold text-gray-800 mb-2">
+                My Bookings
+              </h3>
+              <p className="text-gray-600">{filteredBookings.length} active bookings</p>
+            </a>
+
+            <a
+              href="#/user/chat"
+              className="group bg-white rounded-2xl shadow-lg p-8 hover:shadow-2xl transition-all transform hover:-translate-y-2"
+            >
+              <div className="w-16 h-16 bg-gradient-to-br from-cyan-100 to-teal-100 rounded-2xl flex items-center justify-center mb-4 group-hover:scale-110 transition">
+                <MessageCircle className="w-8 h-8 text-cyan-600" />
+              </div>
+              <h3 className="text-2xl font-bold text-gray-800 mb-2">Messages</h3>
+              <p className="text-gray-600">Chat with providers</p>
+            </a>
+          </div>
+
+          {/* Recent Bookings */}
+          <div className="bg-white rounded-3xl shadow-xl p-8">
+            <div className="flex items-center justify-between mb-6">
+              <h2 className="text-3xl font-black text-gray-800 flex items-center gap-3">
+                <TrendingUp className="w-8 h-8 text-purple-600" />
+                Recent Bookings
+              </h2>
+              <a href="#/user/bookings" className="text-purple-600 hover:text-purple-700 font-semibold">
+                View All →
+              </a>
+            </div>
+
+            {loading ? (
+              <div className="text-center py-12">
+                <div className="w-16 h-16 border-4 border-purple-200 border-t-purple-600 rounded-full animate-spin mx-auto"></div>
+                <p className="text-gray-600 mt-4">Loading bookings...</p>
+              </div>
+            ) : filteredBookings.length === 0 ? (
+              <div className="text-center py-16">
+                <div className="w-24 h-24 bg-gradient-to-br from-purple-100 to-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <Calendar className="w-12 h-12 text-purple-600" />
+                </div>
+                <h3 className="text-xl font-bold text-gray-800 mb-2">No bookings yet</h3>
+                <p className="text-gray-600 mb-6">Start exploring services to make your first booking!</p>
+                <a
+                  href="#/user/services"
+                  className="inline-block px-8 py-3 bg-gradient-to-r from-purple-600 to-blue-600 text-white rounded-xl font-semibold hover:from-purple-700 hover:to-blue-700 transition shadow-lg"
+                >
+                  Browse Services
+                </a>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {filteredBookings.slice(0, 6).map((booking) => (
+                  <div
+                    key={booking._id}
+                    className="group relative bg-gradient-to-br from-white to-purple-50/30 border-2 border-purple-100 rounded-2xl p-6 hover:shadow-2xl hover:border-purple-300 transition-all transform hover:-translate-y-1"
+                  >
+                    <div className="flex items-start justify-between mb-4">
+                      <div className="flex-1">
+                        <h3 className="font-bold text-gray-800 text-lg mb-1 group-hover:text-purple-600 transition">
+                          {typeof booking.service === "object"
+                            ? booking.service.name
+                            : "Service"}
+                        </h3>
+                        {getStatusBadge(booking)}
+                      </div>
+                    </div>
+                    <div className="space-y-2">
+                      <p className="flex items-center gap-2 text-gray-700">
+                        <Calendar className="w-4 h-4 text-purple-500" />
+                        <span className="text-sm font-medium">
+                          {formatScheduledDate(booking.bookingDate, booking.bookingTime)}
+                        </span>
+                      </p>
+                      <p className="text-sm text-gray-600">
+                        <span className="font-semibold">Provider:</span>{" "}
+                        {typeof booking.provider === "object"
+                          ? booking.provider.name
+                          : "Provider"}
+                      </p>
+                      <div className="pt-3 border-t border-purple-100">
+                        <p className="text-xs text-gray-500">
+                          Confirmation: <span className="font-mono font-semibold text-purple-600">{booking.confirmationCode || "Pending"}</span>
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
         </div>
       </div>
     </Layout>
