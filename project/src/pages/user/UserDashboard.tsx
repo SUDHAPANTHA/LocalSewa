@@ -108,51 +108,51 @@ export function UserDashboard() {
 
   return (
     <Layout>
-      <div className="min-h-screen bg-gradient-to-br from-purple-50 via-blue-50 to-cyan-50">
+      <div className="min-h-screen bg-white">
         <div className="max-w-7xl mx-auto px-4 py-8 space-y-8">
           {/* Hero Section */}
-          <div className="relative overflow-hidden bg-gradient-to-br from-purple-600 via-blue-600 to-cyan-500 rounded-3xl shadow-2xl p-8 md:p-12">
-            <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full -mr-32 -mt-32"></div>
-            <div className="absolute bottom-0 left-0 w-48 h-48 bg-white/10 rounded-full -ml-24 -mb-24"></div>
+          <div className="relative overflow-hidden bg-gradient-to-br from-purple-600 to-black rounded-3xl shadow-2xl p-8 md:p-12">
+            <div className="absolute top-0 right-0 w-96 h-96 bg-purple-500/20 rounded-full blur-3xl -mr-48 -mt-48"></div>
+            <div className="absolute bottom-0 left-0 w-64 h-64 bg-white/10 rounded-full blur-2xl -ml-32 -mb-32"></div>
             <div className="relative z-10">
               <div className="flex items-center gap-3 mb-4">
-                <div className="w-12 h-12 bg-white/20 rounded-full flex items-center justify-center backdrop-blur-sm">
-                  <Sparkles className="w-6 h-6 text-white" />
+                <div className="w-14 h-14 bg-white/10 rounded-2xl flex items-center justify-center backdrop-blur-sm border border-white/20">
+                  <Sparkles className="w-7 h-7 text-white" />
                 </div>
                 <h1 className="text-4xl md:text-5xl font-black text-white">
-                  Welcome back, {user?.name}!
+                  Welcome, {user?.name}
                 </h1>
               </div>
-              <p className="text-white/90 text-lg md:text-xl max-w-2xl">
-                Discover amazing services and manage your bookings all in one place
+              <p className="text-white/80 text-lg max-w-2xl">
+                Your personal service hub
               </p>
             </div>
           </div>
 
           {/* Stats Cards */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <div className="bg-gradient-to-br from-purple-500 to-purple-600 rounded-2xl shadow-xl p-6 text-white transform hover:scale-105 transition">
-              <div className="flex items-center justify-between mb-4">
-                <Package className="w-10 h-10 opacity-80" />
-                <span className="text-4xl font-black">{stats.total}</span>
+            <div className="bg-black rounded-2xl shadow-lg p-8 text-white transform hover:scale-105 transition-all duration-300 border border-purple-900/20">
+              <div className="flex items-center justify-between mb-3">
+                <Package className="w-8 h-8 text-purple-400" />
+                <span className="text-5xl font-black">{stats.total}</span>
               </div>
-              <h3 className="text-lg font-semibold opacity-90">Total Bookings</h3>
+              <h3 className="text-sm font-medium text-gray-400 uppercase tracking-wider">Total Bookings</h3>
             </div>
 
-            <div className="bg-gradient-to-br from-amber-400 to-orange-500 rounded-2xl shadow-xl p-6 text-white transform hover:scale-105 transition">
-              <div className="flex items-center justify-between mb-4">
-                <Clock className="w-10 h-10 opacity-80" />
-                <span className="text-4xl font-black">{stats.pending}</span>
+            <div className="bg-purple-600 rounded-2xl shadow-lg p-8 text-white transform hover:scale-105 transition-all duration-300">
+              <div className="flex items-center justify-between mb-3">
+                <Clock className="w-8 h-8 text-purple-200" />
+                <span className="text-5xl font-black">{stats.pending}</span>
               </div>
-              <h3 className="text-lg font-semibold opacity-90">Pending</h3>
+              <h3 className="text-sm font-medium text-purple-100 uppercase tracking-wider">Pending</h3>
             </div>
 
-            <div className="bg-gradient-to-br from-emerald-400 to-green-500 rounded-2xl shadow-xl p-6 text-white transform hover:scale-105 transition">
-              <div className="flex items-center justify-between mb-4">
-                <CheckCircle className="w-10 h-10 opacity-80" />
-                <span className="text-4xl font-black">{stats.completed}</span>
+            <div className="bg-white rounded-2xl shadow-lg p-8 border-2 border-black transform hover:scale-105 transition-all duration-300">
+              <div className="flex items-center justify-between mb-3">
+                <CheckCircle className="w-8 h-8 text-purple-600" />
+                <span className="text-5xl font-black text-black">{stats.completed}</span>
               </div>
-              <h3 className="text-lg font-semibold opacity-90">Completed</h3>
+              <h3 className="text-sm font-medium text-gray-600 uppercase tracking-wider">Completed</h3>
             </div>
           </div>
 
@@ -160,69 +160,71 @@ export function UserDashboard() {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <a
               href="#/user/services"
-              className="group bg-white rounded-2xl shadow-lg p-8 hover:shadow-2xl transition-all transform hover:-translate-y-2"
+              className="group bg-white border-2 border-black rounded-2xl shadow-lg p-8 hover:bg-black hover:text-white transition-all duration-300 transform hover:-translate-y-1"
             >
-              <div className="w-16 h-16 bg-gradient-to-br from-purple-100 to-blue-100 rounded-2xl flex items-center justify-center mb-4 group-hover:scale-110 transition">
-                <Search className="w-8 h-8 text-purple-600" />
+              <div className="w-16 h-16 bg-purple-100 group-hover:bg-purple-600 rounded-2xl flex items-center justify-center mb-4 transition-all duration-300">
+                <Search className="w-8 h-8 text-purple-600 group-hover:text-white transition-colors duration-300" />
               </div>
-              <h3 className="text-2xl font-bold text-gray-800 mb-2">
+              <h3 className="text-2xl font-bold mb-2 group-hover:text-white transition-colors duration-300">
                 Browse Services
               </h3>
-              <p className="text-gray-600">Discover and book amazing services</p>
+              <p className="text-gray-600 group-hover:text-gray-300 transition-colors duration-300">Discover and book services</p>
             </a>
 
             <a
               href="#/user/bookings"
-              className="group bg-white rounded-2xl shadow-lg p-8 hover:shadow-2xl transition-all transform hover:-translate-y-2"
+              className="group bg-purple-600 text-white rounded-2xl shadow-lg p-8 hover:bg-purple-700 transition-all duration-300 transform hover:-translate-y-1"
             >
-              <div className="w-16 h-16 bg-gradient-to-br from-blue-100 to-cyan-100 rounded-2xl flex items-center justify-center mb-4 group-hover:scale-110 transition">
-                <Calendar className="w-8 h-8 text-blue-600" />
+              <div className="w-16 h-16 bg-white/20 rounded-2xl flex items-center justify-center mb-4 group-hover:bg-white/30 transition-all duration-300">
+                <Calendar className="w-8 h-8 text-white" />
               </div>
-              <h3 className="text-2xl font-bold text-gray-800 mb-2">
+              <h3 className="text-2xl font-bold mb-2">
                 My Bookings
               </h3>
-              <p className="text-gray-600">{filteredBookings.length} active bookings</p>
+              <p className="text-purple-100">{filteredBookings.length} active bookings</p>
             </a>
 
             <a
               href="#/user/chat"
-              className="group bg-white rounded-2xl shadow-lg p-8 hover:shadow-2xl transition-all transform hover:-translate-y-2"
+              className="group bg-white border-2 border-black rounded-2xl shadow-lg p-8 hover:bg-black hover:text-white transition-all duration-300 transform hover:-translate-y-1"
             >
-              <div className="w-16 h-16 bg-gradient-to-br from-cyan-100 to-teal-100 rounded-2xl flex items-center justify-center mb-4 group-hover:scale-110 transition">
-                <MessageCircle className="w-8 h-8 text-cyan-600" />
+              <div className="w-16 h-16 bg-purple-100 group-hover:bg-purple-600 rounded-2xl flex items-center justify-center mb-4 transition-all duration-300">
+                <MessageCircle className="w-8 h-8 text-purple-600 group-hover:text-white transition-colors duration-300" />
               </div>
-              <h3 className="text-2xl font-bold text-gray-800 mb-2">Messages</h3>
-              <p className="text-gray-600">Chat with providers</p>
+              <h3 className="text-2xl font-bold mb-2 group-hover:text-white transition-colors duration-300">Messages</h3>
+              <p className="text-gray-600 group-hover:text-gray-300 transition-colors duration-300">Chat with providers</p>
             </a>
           </div>
 
           {/* Recent Bookings */}
-          <div className="bg-white rounded-3xl shadow-xl p-8">
-            <div className="flex items-center justify-between mb-6">
-              <h2 className="text-3xl font-black text-gray-800 flex items-center gap-3">
-                <TrendingUp className="w-8 h-8 text-purple-600" />
+          <div className="bg-white border-2 border-black rounded-3xl shadow-xl p-8">
+            <div className="flex items-center justify-between mb-8">
+              <h2 className="text-3xl font-black text-black flex items-center gap-3">
+                <div className="w-10 h-10 bg-purple-600 rounded-xl flex items-center justify-center">
+                  <TrendingUp className="w-6 h-6 text-white" />
+                </div>
                 Recent Bookings
               </h2>
-              <a href="#/user/bookings" className="text-purple-600 hover:text-purple-700 font-semibold">
+              <a href="#/user/bookings" className="text-purple-600 hover:text-black font-bold transition-colors">
                 View All →
               </a>
             </div>
 
             {loading ? (
               <div className="text-center py-12">
-                <div className="w-16 h-16 border-4 border-purple-200 border-t-purple-600 rounded-full animate-spin mx-auto"></div>
-                <p className="text-gray-600 mt-4">Loading bookings...</p>
+                <div className="w-16 h-16 border-4 border-gray-200 border-t-purple-600 rounded-full animate-spin mx-auto"></div>
+                <p className="text-gray-600 mt-4 font-medium">Loading bookings...</p>
               </div>
             ) : filteredBookings.length === 0 ? (
               <div className="text-center py-16">
-                <div className="w-24 h-24 bg-gradient-to-br from-purple-100 to-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <div className="w-24 h-24 bg-purple-100 rounded-3xl flex items-center justify-center mx-auto mb-4">
                   <Calendar className="w-12 h-12 text-purple-600" />
                 </div>
-                <h3 className="text-xl font-bold text-gray-800 mb-2">No bookings yet</h3>
-                <p className="text-gray-600 mb-6">Start exploring services to make your first booking!</p>
+                <h3 className="text-2xl font-black text-black mb-2">No bookings yet</h3>
+                <p className="text-gray-600 mb-6">Start exploring services to make your first booking</p>
                 <a
                   href="#/user/services"
-                  className="inline-block px-8 py-3 bg-gradient-to-r from-purple-600 to-blue-600 text-white rounded-xl font-semibold hover:from-purple-700 hover:to-blue-700 transition shadow-lg"
+                  className="inline-block px-8 py-4 bg-black text-white rounded-xl font-bold hover:bg-purple-600 transition-all duration-300 shadow-lg"
                 >
                   Browse Services
                 </a>
@@ -232,11 +234,11 @@ export function UserDashboard() {
                 {filteredBookings.slice(0, 6).map((booking) => (
                   <div
                     key={booking._id}
-                    className="group relative bg-gradient-to-br from-white to-purple-50/30 border-2 border-purple-100 rounded-2xl p-6 hover:shadow-2xl hover:border-purple-300 transition-all transform hover:-translate-y-1"
+                    className="group relative bg-white border-2 border-gray-200 rounded-2xl p-6 hover:border-purple-600 hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1"
                   >
                     <div className="flex items-start justify-between mb-4">
                       <div className="flex-1">
-                        <h3 className="font-bold text-gray-800 text-lg mb-1 group-hover:text-purple-600 transition">
+                        <h3 className="font-black text-black text-lg mb-2 group-hover:text-purple-600 transition-colors">
                           {typeof booking.service === "object"
                             ? booking.service.name
                             : "Service"}
@@ -244,22 +246,22 @@ export function UserDashboard() {
                         {getStatusBadge(booking)}
                       </div>
                     </div>
-                    <div className="space-y-2">
-                      <p className="flex items-center gap-2 text-gray-700">
-                        <Calendar className="w-4 h-4 text-purple-500" />
-                        <span className="text-sm font-medium">
+                    <div className="space-y-3">
+                      <p className="flex items-center gap-2 text-black">
+                        <Calendar className="w-4 h-4 text-purple-600" />
+                        <span className="text-sm font-semibold">
                           {formatScheduledDate(booking.bookingDate, booking.bookingTime)}
                         </span>
                       </p>
-                      <p className="text-sm text-gray-600">
-                        <span className="font-semibold">Provider:</span>{" "}
+                      <p className="text-sm text-gray-700">
+                        <span className="font-bold">Provider:</span>{" "}
                         {typeof booking.provider === "object"
                           ? booking.provider.name
                           : "Provider"}
                       </p>
-                      <div className="pt-3 border-t border-purple-100">
-                        <p className="text-xs text-gray-500">
-                          Confirmation: <span className="font-mono font-semibold text-purple-600">{booking.confirmationCode || "Pending"}</span>
+                      <div className="pt-3 border-t-2 border-gray-100">
+                        <p className="text-xs text-gray-600">
+                          Code: <span className="font-mono font-bold text-purple-600">{booking.confirmationCode || "Pending"}</span>
                         </p>
                       </div>
                     </div>

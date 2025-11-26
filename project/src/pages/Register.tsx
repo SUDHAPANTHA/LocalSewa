@@ -57,7 +57,7 @@ export function Register() {
     const loadAreas = async () => {
       try {
         setAreasLoading(true);
-        const response = await areasApi.listAreas();
+        const response = await areasApi.getAll();
         if (cancelled) return;
         setAreas(response.data.areas || []);
       } catch (error) {

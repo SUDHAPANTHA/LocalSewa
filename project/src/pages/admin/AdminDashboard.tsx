@@ -132,60 +132,63 @@ export function AdminDashboard() {
     <Layout>
       <div className="max-w-6xl mx-auto animate-fade-in">
         {errorMessage && (
-          <div className="mb-6 rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-rose-700 text-sm">
-            <p>{errorMessage}</p>
+          <div className="mb-6 rounded-2xl border-2 border-black bg-white px-6 py-4 text-black">
+            <p className="font-bold">{errorMessage}</p>
             <button
               onClick={fetchData}
-              className="mt-2 inline-flex items-center gap-1 text-rose-700 underline hover:text-rose-900"
+              className="mt-3 px-4 py-2 bg-black text-white rounded-lg font-bold hover:bg-purple-600 transition-all duration-300"
             >
               Retry
             </button>
           </div>
         )}
-        <div className="bg-gradient-to-r from-red-600 to-red-800 text-white rounded-2xl shadow-xl p-8 mb-8">
-          <div className="flex items-center gap-4">
-            <Shield className="w-16 h-16" />
+        <div className="bg-gradient-to-br from-purple-600 to-black rounded-3xl shadow-2xl p-10 mb-8 relative overflow-hidden">
+          <div className="absolute top-0 right-0 w-96 h-96 bg-purple-500/20 rounded-full blur-3xl -mr-48 -mt-48"></div>
+          <div className="relative z-10 flex items-center gap-5">
+            <div className="w-16 h-16 bg-white/10 rounded-2xl flex items-center justify-center backdrop-blur-sm border border-white/20">
+              <Shield className="w-10 h-10 text-white" />
+            </div>
             <div>
-              <h1 className="text-4xl font-bold mb-2">Admin Dashboard</h1>
-              <p className="text-red-100">Manage platform operations</p>
+              <h1 className="text-5xl font-black text-white mb-2">Admin Control</h1>
+              <p className="text-purple-100 text-lg">Platform management center</p>
             </div>
           </div>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-          <div className="bg-white rounded-xl shadow-lg p-6">
-            <UserIcon className="w-12 h-12 text-blue-600 mb-3" />
-            <h3 className="text-3xl font-bold text-gray-800">{users.length}</h3>
-            <p className="text-gray-600">Total Users</p>
+          <div className="bg-white rounded-2xl shadow-lg p-8 border-2 border-black">
+            <UserIcon className="w-10 h-10 text-purple-600 mb-4" />
+            <h3 className="text-4xl font-black text-black mb-2">{users.length}</h3>
+            <p className="text-gray-600 text-sm uppercase tracking-wider">Total Users</p>
           </div>
 
-          <div className="bg-white rounded-xl shadow-lg p-6">
-            <Users className="w-12 h-12 text-indigo-600 mb-3" />
-            <h3 className="text-3xl font-bold text-gray-800">
+          <div className="bg-black rounded-2xl shadow-lg p-8 text-white border border-purple-900/20">
+            <Users className="w-10 h-10 text-purple-400 mb-4" />
+            <h3 className="text-4xl font-black mb-2">
               {providers.length}
             </h3>
-            <p className="text-gray-600">Total Providers</p>
-            <p className="text-xs text-gray-400 mt-1">
-              {pendingProviders.length} awaiting approval
+            <p className="text-gray-400 text-sm uppercase tracking-wider">Total Providers</p>
+            <p className="text-xs text-purple-400 mt-2 font-semibold">
+              {pendingProviders.length} pending
             </p>
           </div>
 
-          <div className="bg-white rounded-xl shadow-lg p-6">
-            <Layers className="w-12 h-12 text-purple-600 mb-3" />
-            <h3 className="text-3xl font-bold text-gray-800">
+          <div className="bg-purple-600 rounded-2xl shadow-lg p-8 text-white">
+            <Layers className="w-10 h-10 text-purple-200 mb-4" />
+            <h3 className="text-4xl font-black mb-2">
               {services.length}
             </h3>
-            <p className="text-gray-600">Active Services</p>
+            <p className="text-purple-100 text-sm uppercase tracking-wider">Active Services</p>
           </div>
 
-          <div className="bg-white rounded-xl shadow-lg p-6">
-            <Calendar className="w-12 h-12 text-green-600 mb-3" />
-            <h3 className="text-3xl font-bold text-gray-800">
+          <div className="bg-white rounded-2xl shadow-lg p-8 border-2 border-black">
+            <Calendar className="w-10 h-10 text-purple-600 mb-4" />
+            <h3 className="text-4xl font-black text-black mb-2">
               {bookings.length}
             </h3>
-            <p className="text-gray-600">Total Bookings</p>
-            <p className="text-xs text-gray-400 mt-1">
-              {pendingBookings.length} pending review
+            <p className="text-gray-600 text-sm uppercase tracking-wider">Total Bookings</p>
+            <p className="text-xs text-purple-600 mt-2 font-semibold">
+              {pendingBookings.length} pending
             </p>
           </div>
         </div>
@@ -193,82 +196,93 @@ export function AdminDashboard() {
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6">
           <a
             href="#/admin/providers"
-            className="bg-white rounded-xl shadow-lg p-6 hover:shadow-2xl transition-all transform hover:-translate-y-1 no-underline"
+            className="group bg-white border-2 border-black rounded-2xl shadow-lg p-8 hover:bg-black hover:text-white transition-all duration-300 transform hover:-translate-y-1 no-underline"
           >
-            <Users className="w-12 h-12 text-blue-600 mb-4" />
-            <h3 className="text-xl font-bold text-gray-800 mb-2">
+            <div className="w-14 h-14 bg-purple-100 group-hover:bg-purple-600 rounded-2xl flex items-center justify-center mb-4 transition-all duration-300">
+              <Users className="w-8 h-8 text-purple-600 group-hover:text-white transition-colors duration-300" />
+            </div>
+            <h3 className="text-xl font-black mb-2 group-hover:text-white transition-colors duration-300">
               Manage Providers
             </h3>
-            <p className="text-gray-600">Approve or reject service providers</p>
+            <p className="text-gray-600 group-hover:text-gray-300 transition-colors duration-300 text-sm">Approve or reject providers</p>
             {pendingProviders.length > 0 && (
-              <p className="mt-2 text-yellow-600 font-medium">
-                {pendingProviders.length} pending approval
+              <p className="mt-3 text-purple-600 group-hover:text-purple-300 font-bold text-sm">
+                {pendingProviders.length} pending
               </p>
             )}
           </a>
 
           <a
             href="#/admin/bookings"
-            className="bg-white rounded-xl shadow-lg p-6 hover:shadow-2xl transition-all transform hover:-translate-y-1 no-underline"
+            className="bg-purple-600 text-white rounded-2xl shadow-lg p-8 hover:bg-purple-700 transition-all duration-300 transform hover:-translate-y-1 no-underline"
           >
-            <Calendar className="w-12 h-12 text-green-600 mb-4" />
-            <h3 className="text-xl font-bold text-gray-800 mb-2">
+            <div className="w-14 h-14 bg-white/20 rounded-2xl flex items-center justify-center mb-4">
+              <Calendar className="w-8 h-8 text-white" />
+            </div>
+            <h3 className="text-xl font-black mb-2">
               Manage Bookings
             </h3>
-            <p className="text-gray-600">Review and manage all bookings</p>
+            <p className="text-purple-100 text-sm">Review and manage bookings</p>
             {pendingBookings.length > 0 && (
-              <p className="mt-2 text-yellow-600 font-medium">
-                {pendingBookings.length} pending review
+              <p className="mt-3 text-white font-bold text-sm">
+                {pendingBookings.length} pending
               </p>
             )}
           </a>
 
           <a
             href="#/admin/users"
-            className="bg-white rounded-xl shadow-lg p-6 hover:shadow-2xl transition-all transform hover:-translate-y-1 no-underline"
+            className="group bg-white border-2 border-black rounded-2xl shadow-lg p-8 hover:bg-black hover:text-white transition-all duration-300 transform hover:-translate-y-1 no-underline"
           >
-            <UserIcon className="w-12 h-12 text-sky-600 mb-4" />
-            <h3 className="text-xl font-bold text-gray-800 mb-2">
+            <div className="w-14 h-14 bg-purple-100 group-hover:bg-purple-600 rounded-2xl flex items-center justify-center mb-4 transition-all duration-300">
+              <UserIcon className="w-8 h-8 text-purple-600 group-hover:text-white transition-colors duration-300" />
+            </div>
+            <h3 className="text-xl font-black mb-2 group-hover:text-white transition-colors duration-300">
               Manage Users
             </h3>
-            <p className="text-gray-600">Review and remove platform users</p>
+            <p className="text-gray-600 group-hover:text-gray-300 transition-colors duration-300 text-sm">Review platform users</p>
           </a>
 
           <a
             href="#/admin/services"
-            className="bg-white rounded-xl shadow-lg p-6 hover:shadow-2xl transition-all transform hover:-translate-y-1 no-underline"
+            className="group bg-white border-2 border-black rounded-2xl shadow-lg p-8 hover:bg-black hover:text-white transition-all duration-300 transform hover:-translate-y-1 no-underline"
           >
-            <Layers className="w-12 h-12 text-purple-600 mb-4" />
-            <h3 className="text-xl font-bold text-gray-800 mb-2">
+            <div className="w-14 h-14 bg-purple-100 group-hover:bg-purple-600 rounded-2xl flex items-center justify-center mb-4 transition-all duration-300">
+              <Layers className="w-8 h-8 text-purple-600 group-hover:text-white transition-colors duration-300" />
+            </div>
+            <h3 className="text-xl font-black mb-2 group-hover:text-white transition-colors duration-300">
               View Services
             </h3>
-            <p className="text-gray-600">
-              Audit vendor services and take action
+            <p className="text-gray-600 group-hover:text-gray-300 transition-colors duration-300 text-sm">
+              Audit vendor services
             </p>
           </a>
         </div>
 
         <div className="mt-10">
-          <h2 className="text-2xl font-bold text-gray-900 mb-4">
-            Platform Intelligence
-          </h2>
-          <p className="text-gray-600 mb-6">
-            Key algorithms running behind the scenes to keep LocalSewa reliable
-            and proactive.
-          </p>
+          <div className="mb-6">
+            <h2 className="text-3xl font-black text-black mb-2">
+              Platform Intelligence
+            </h2>
+            <p className="text-gray-600">
+              AI algorithms powering LocalSewa
+            </p>
+          </div>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             {algorithms.map(({ title, description, icon: Icon, badge }) => (
               <div
                 key={title}
-                className="bg-white rounded-2xl shadow-lg p-6 border border-gray-100 hover:shadow-2xl transition"
+                className="bg-white rounded-2xl shadow-lg p-8 border-2 border-gray-200 hover:border-purple-600 hover:shadow-xl transition-all duration-300"
               >
                 <div className="flex items-center gap-3 mb-4">
-                  <Icon className="w-10 h-10 text-indigo-600" />
-                  <span className="px-3 py-1 text-xs font-semibold rounded-full bg-indigo-50 text-indigo-700">
+                  <div className="w-12 h-12 bg-purple-100 rounded-xl flex items-center justify-center">
+                    <Icon className="w-7 h-7 text-purple-600" />
+                  </div>
+                  <span className="px-3 py-1 text-xs font-bold rounded-full bg-black text-white">
                     {badge}
                   </span>
                 </div>
-                <h3 className="text-xl font-semibold text-gray-900 mb-2">
+                <h3 className="text-xl font-black text-black mb-3">
                   {title}
                 </h3>
                 <p className="text-sm text-gray-600 leading-relaxed">

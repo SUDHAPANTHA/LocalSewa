@@ -234,34 +234,37 @@ export function VendorDashboard() {
     <Layout>
       {ToastComponent}
       <div className="max-w-6xl mx-auto animate-fade-in">
-        <div className="bg-gradient-to-r from-green-600 to-green-800 text-white rounded-2xl shadow-xl p-8 mb-8">
-          <h1 className="text-4xl font-bold mb-2">Provider Dashboard</h1>
-          <p className="text-green-100">Welcome, {user?.name}!</p>
+        <div className="bg-gradient-to-br from-purple-600 to-black rounded-3xl shadow-2xl p-10 mb-8 relative overflow-hidden">
+          <div className="absolute top-0 right-0 w-96 h-96 bg-purple-500/20 rounded-full blur-3xl -mr-48 -mt-48"></div>
+          <div className="relative z-10">
+            <h1 className="text-5xl font-black text-white mb-2">Provider Hub</h1>
+            <p className="text-purple-100 text-lg">Welcome back, {user?.name}</p>
+          </div>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-          <div className="bg-white rounded-xl shadow-lg p-6">
-            <Briefcase className="w-12 h-12 text-blue-600 mb-3" />
-            <h3 className="text-3xl font-bold text-gray-800">
+          <div className="bg-black rounded-2xl shadow-lg p-8 text-white border border-purple-900/20">
+            <Briefcase className="w-10 h-10 text-purple-400 mb-4" />
+            <h3 className="text-4xl font-black mb-2">
               {services.length}
             </h3>
-            <p className="text-gray-600">Total Services</p>
+            <p className="text-gray-400 text-sm uppercase tracking-wider">Total Services</p>
           </div>
 
-          <div className="bg-white rounded-xl shadow-lg p-6">
-            <Calendar className="w-12 h-12 text-green-600 mb-3" />
-            <h3 className="text-3xl font-bold text-gray-800">
+          <div className="bg-purple-600 rounded-2xl shadow-lg p-8 text-white">
+            <Calendar className="w-10 h-10 text-purple-200 mb-4" />
+            <h3 className="text-4xl font-black mb-2">
               {bookings.length}
             </h3>
-            <p className="text-gray-600">Total Bookings</p>
+            <p className="text-purple-100 text-sm uppercase tracking-wider">Total Bookings</p>
           </div>
 
-          <div className="bg-white rounded-xl shadow-lg p-6">
-            <MessageCircle className="w-12 h-12 text-yellow-600 mb-3" />
-            <h3 className="text-3xl font-bold text-gray-800">
+          <div className="bg-white rounded-2xl shadow-lg p-8 border-2 border-black">
+            <MessageCircle className="w-10 h-10 text-purple-600 mb-4" />
+            <h3 className="text-4xl font-black text-black mb-2">
               {pendingBookings.length}
             </h3>
-            <p className="text-gray-600">Pending Requests</p>
+            <p className="text-gray-600 text-sm uppercase tracking-wider">Pending Requests</p>
           </div>
         </div>
 
@@ -281,18 +284,18 @@ export function VendorDashboard() {
         )}
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
-          <section className="bg-white rounded-2xl shadow-lg p-6 border border-gray-100">
-            <div className="flex items-start justify-between">
+          <section className="bg-white rounded-2xl shadow-lg p-8 border-2 border-black">
+            <div className="flex items-start justify-between mb-4">
               <div>
-                <h3 className="text-xl font-semibold text-gray-900">
-                  CV & compliance
+                <h3 className="text-2xl font-black text-black">
+                  CV & Compliance
                 </h3>
-                <p className="text-sm text-gray-500">
-                  Upload a PDF resume to trigger auto-filtering
+                <p className="text-sm text-gray-600 mt-1">
+                  Upload PDF resume for verification
                 </p>
               </div>
               <span
-                className={`px-3 py-1 rounded-full text-xs font-semibold ${cvBadge.badge}`}
+                className={`px-3 py-1 rounded-full text-xs font-bold ${cvBadge.badge}`}
               >
                 {cvBadge.label}
               </span>
@@ -338,10 +341,10 @@ export function VendorDashboard() {
                 </div>
               )}
             <div className="mt-5 flex flex-col gap-3 sm:flex-row">
-              <label className="flex-1 flex items-center gap-3 px-4 py-3 border border-dashed border-gray-300 rounded-xl cursor-pointer hover:border-gray-400 transition">
-                <Upload className="w-5 h-5 text-slate-500" />
+              <label className="flex-1 flex items-center gap-3 px-4 py-3 border-2 border-dashed border-gray-300 rounded-xl cursor-pointer hover:border-purple-600 transition-all duration-300">
+                <Upload className="w-5 h-5 text-purple-600" />
                 <div className="flex-1">
-                  <p className="text-sm font-medium text-gray-800">
+                  <p className="text-sm font-bold text-black">
                     {selectedCvFile?.name ||
                       providerProfile?.cvFile?.originalName ||
                       "Attach PDF CV"}
@@ -358,7 +361,7 @@ export function VendorDashboard() {
               <button
                 onClick={handleCvUpload}
                 disabled={cvUploading || !selectedCvFile}
-                className="px-5 py-3 rounded-xl bg-slate-900 text-white font-semibold hover:bg-slate-800 disabled:opacity-50"
+                className="px-6 py-3 rounded-xl bg-black text-white font-bold hover:bg-purple-600 disabled:opacity-50 transition-all duration-300"
               >
                 {cvUploading ? "Uploading..." : "Submit CV"}
               </button>
@@ -373,44 +376,50 @@ export function VendorDashboard() {
 
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           <a
             href="#/vendor/services"
-            className="bg-white rounded-xl shadow-lg p-6 hover:shadow-2xl transition-all transform hover:-translate-y-1 flex items-center justify-between no-underline"
+            className="group bg-white border-2 border-black rounded-2xl shadow-lg p-8 hover:bg-black hover:text-white transition-all duration-300 transform hover:-translate-y-1 flex flex-col justify-between no-underline"
           >
+            <div className="w-14 h-14 bg-purple-100 group-hover:bg-purple-600 rounded-2xl flex items-center justify-center mb-4 transition-all duration-300">
+              <Plus className="w-8 h-8 text-purple-600 group-hover:text-white transition-colors duration-300" />
+            </div>
             <div>
-              <h3 className="text-xl font-bold text-gray-800 mb-2">
+              <h3 className="text-2xl font-black mb-2 group-hover:text-white transition-colors duration-300">
                 Manage Services
               </h3>
-              <p className="text-gray-600">
-                Add, edit, or remove your services
+              <p className="text-gray-600 group-hover:text-gray-300 transition-colors duration-300">
+                Add, edit, or remove services
               </p>
             </div>
-            <Plus className="w-12 h-12 text-blue-600" />
           </a>
 
           <a
             href="#/vendor/bookings"
-            className="bg-white rounded-xl shadow-lg p-6 hover:shadow-2xl transition-all transform hover:-translate-y-1 flex items-center justify-between no-underline"
+            className="bg-purple-600 text-white rounded-2xl shadow-lg p-8 hover:bg-purple-700 transition-all duration-300 transform hover:-translate-y-1 flex flex-col justify-between no-underline"
           >
+            <div className="w-14 h-14 bg-white/20 rounded-2xl flex items-center justify-center mb-4">
+              <Calendar className="w-8 h-8 text-white" />
+            </div>
             <div>
-              <h3 className="text-xl font-bold text-gray-800 mb-2">
+              <h3 className="text-2xl font-black mb-2">
                 View Bookings
               </h3>
-              <p className="text-gray-600">Manage customer bookings</p>
+              <p className="text-purple-100">Manage customer bookings</p>
             </div>
-            <Calendar className="w-12 h-12 text-green-600" />
           </a>
 
           <a
             href="#/vendor/chat"
-            className="bg-white rounded-xl shadow-lg p-6 hover:shadow-2xl transition-all transform hover:-translate-y-1 flex items-center justify-between no-underline"
+            className="group bg-white border-2 border-black rounded-2xl shadow-lg p-8 hover:bg-black hover:text-white transition-all duration-300 transform hover:-translate-y-1 flex flex-col justify-between no-underline"
           >
-            <div>
-              <h3 className="text-xl font-bold text-gray-800 mb-2">Messages</h3>
-              <p className="text-gray-600">Chat with customers</p>
+            <div className="w-14 h-14 bg-purple-100 group-hover:bg-purple-600 rounded-2xl flex items-center justify-center mb-4 transition-all duration-300">
+              <MessageCircle className="w-8 h-8 text-purple-600 group-hover:text-white transition-colors duration-300" />
             </div>
-            <MessageCircle className="w-12 h-12 text-yellow-600" />
+            <div>
+              <h3 className="text-2xl font-black mb-2 group-hover:text-white transition-colors duration-300">Messages</h3>
+              <p className="text-gray-600 group-hover:text-gray-300 transition-colors duration-300">Chat with customers</p>
+            </div>
           </a>
         </div>
 
