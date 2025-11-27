@@ -3639,6 +3639,40 @@ app.post("/chatbot", async (req, res) => {
       return res.status(400).json({ reply: "Message is required" });
     }
 
+    const lowerMessage = message.toLowerCase().trim();
+
+    // Handle greetings and common questions
+    const greetingPatterns = /^(hi|hello|hey|good morning|good afternoon|good evening|namaste)$/i;
+    const helpPatterns = /^(help|what can you do|how does this work|what services)$/i;
+    const thanksPatterns = /^(thanks|thank you|thx|appreciate it)$/i;
+
+    if (greetingPatterns.test(lowerMessage)) {
+      return res.json({
+        reply: "Hello! 👋 Welcome to LocalSewa! I'm your AI assistant here to help you find the perfect service provider in Kathmandu.\n\nI can help you with:\n🔧 Plumbing, electrical, and handyman services\n🏠 Cleaning, painting, and home maintenance\n🌱 Gardening, pest control, and more\n\nJust tell me what you need! For example:\n• \"I need a plumber in Tinkune\"\n• \"Electrician under 2000 rupees\"\n• \"Cleaning service near Baneshwor\"\n\nHow can I assist you today? 😊",
+        suggestions: [],
+      });
+    }
+
+    if (helpPatterns.test(lowerMessage)) {
+      return res.json({
+        reply: "I'm here to help you find the best service providers in Kathmandu! 🎯\n\n**Here's what I can do:**\n\n✨ **Find Services** - Just tell me what you need (plumber, electrician, cleaner, etc.)\n💰 **Budget Matching** - Mention your budget and I'll find options within your range\n📍 **Location-Based** - Tell me your area and I'll show nearby providers\n⭐ **Quality Assured** - All recommendations are from verified, highly-rated providers\n\n**Try asking:**\n• \"Plumber in Tinkune under 2000\"\n• \"Best electrician near me\"\n• \"Affordable cleaning service\"\n• \"AC repair in Baneshwor\"\n\nWhat service are you looking for? 😊",
+        suggestions: [],
+      });
+    }
+
+    if (thanksPatterns.test(lowerMessage)) {
+      const thanksResponses = [
+        "You're very welcome! 😊 Feel free to ask if you need anything else!",
+        "Happy to help! 🙌 Let me know if you need more assistance!",
+        "My pleasure! 👍 I'm here whenever you need help finding services!",
+        "Anytime! ✨ Don't hesitate to reach out if you have more questions!",
+      ];
+      return res.json({
+        reply: thanksResponses[Math.floor(Math.random() * thanksResponses.length)],
+        suggestions: [],
+      });
+    }
+
     const detectedCategory = detectCategoryFromMessage(message);
     const budgetCeiling = detectBudgetCeiling(message);
     const detectedArea = detectAreaFromMessage(message);
@@ -3701,35 +3735,79 @@ app.post("/chatbot", async (req, res) => {
         entry.distanceKm != null
           ? Number(entry.distanceKm.toFixed(2))
           : undefined,
+      rating: entry.service.rating || 4.5,
+      bookingCount: entry.service.bookingCount || 0,
     }));
 
-    const replyParts = [];
-    replyParts.push("Here's what I found for you:");
-    if (detectedCategory) {
-      replyParts.push(
-        `You mentioned ${detectedCategory}, so I prioritized specialists in that category.`
-      );
-    }
-    if (budgetCeiling) {
-      replyParts.push(
-        `All suggestions are within NPR ${budgetCeiling.toLocaleString()} budget.`
-      );
-    }
-    if (detectedArea) {
-      replyParts.push(`Showing services near ${detectedArea.name}.`);
-    }
+    // Generate natural, ChatGPT-like response
+    let reply = "";
+    
     if (suggestions.length === 0) {
-      replyParts.push(
-        "I could not find a perfect match yet. Try adjusting your request or widen the area."
-      );
+      // No results found
+      const noResultsResponses = [
+        `I couldn't find any services matching your exact criteria. ${detectedCategory ? `There might not be ${detectedCategory} services available` : 'Try broadening your search'} ${detectedArea ? `in ${detectedArea.name}` : 'in your area'} ${budgetCeiling ? `within NPR ${budgetCeiling.toLocaleString()}` : ''}. Would you like me to show you similar services or try a different area?`,
+        `Hmm, I'm not finding any perfect matches right now. ${detectedCategory ? `${detectedCategory.charAt(0).toUpperCase() + detectedCategory.slice(1)} services` : 'Services'} ${detectedArea ? `near ${detectedArea.name}` : ''} ${budgetCeiling ? `under NPR ${budgetCeiling.toLocaleString()}` : ''} seem to be limited. Can I help you with something else or adjust the search?`,
+      ];
+      reply = noResultsResponses[Math.floor(Math.random() * noResultsResponses.length)];
     } else {
-      replyParts.push(
-        `Top pick: ${suggestions[0].name} (${suggestions[0].priceLabel}).`
-      );
+      // Results found - generate natural response
+      const greetings = [
+        "Great question! I found some excellent options for you.",
+        "Perfect! I've got just what you need.",
+        "I'd be happy to help! Here's what I found:",
+        "Excellent! I've found some top-rated services for you.",
+        "Let me help you with that! I've found some great matches:",
+      ];
+      
+      const greeting = greetings[Math.floor(Math.random() * greetings.length)];
+      reply = greeting + "\n\n";
+
+      // Add context about what was detected
+      const contextParts = [];
+      if (detectedCategory) {
+        contextParts.push(`${detectedCategory} services`);
+      }
+      if (detectedArea) {
+        contextParts.push(`in ${detectedArea.name}`);
+      }
+      if (budgetCeiling) {
+        contextParts.push(`within your NPR ${budgetCeiling.toLocaleString()} budget`);
+      }
+      
+      if (contextParts.length > 0) {
+        reply += `I've searched for ${contextParts.join(' ')} and found ${suggestions.length} excellent ${suggestions.length === 1 ? 'option' : 'options'}.\n\n`;
+      }
+
+      // Highlight top recommendation with personality
+      const topService = suggestions[0];
+      const topRecommendations = [
+        `🌟 My top recommendation is **${topService.name}** at ${topService.priceLabel}. ${topService.providerName ? `Provided by ${topService.providerName}, ` : ''}they have a ${topService.rating} star rating with ${topService.bookingCount} successful bookings. ${topService.distanceKm ? `Plus, they're only ${topService.distanceKm} km away from you!` : ''}`,
+        `✨ I highly recommend **${topService.name}** (${topService.priceLabel}). ${topService.providerName ? `${topService.providerName} ` : 'They '}have an impressive ${topService.rating}⭐ rating and ${topService.bookingCount} happy customers. ${topService.distanceKm ? `They're conveniently located just ${topService.distanceKm} km away.` : ''}`,
+        `💎 **${topService.name}** stands out as the best choice at ${topService.priceLabel}. With a ${topService.rating} star rating and ${topService.bookingCount} completed bookings, ${topService.providerName ? `${topService.providerName} is` : 'they are'} highly trusted. ${topService.distanceKm ? `Distance: ${topService.distanceKm} km.` : ''}`,
+      ];
+      reply += topRecommendations[Math.floor(Math.random() * topRecommendations.length)];
+
+      // Add info about other options
+      if (suggestions.length > 1) {
+        reply += `\n\n📋 I've also found ${suggestions.length - 1} other great ${suggestions.length - 1 === 1 ? 'option' : 'options'} for you to compare. `;
+        if (detectedArea) {
+          reply += `All services are sorted by proximity to ${detectedArea.name}. `;
+        }
+        reply += "Check them out below!";
+      }
+
+      // Add helpful closing
+      const closings = [
+        "\n\nFeel free to ask if you need more details or want to explore other options! 😊",
+        "\n\nLet me know if you'd like more information about any of these services! 👍",
+        "\n\nNeed help with anything else? I'm here to assist! 🙌",
+        "\n\nWould you like to know more about any of these options? Just ask! ✨",
+      ];
+      reply += closings[Math.floor(Math.random() * closings.length)];
     }
 
     res.json({
-      reply: replyParts.join(" "),
+      reply: reply,
       suggestions,
     });
   } catch (err) {

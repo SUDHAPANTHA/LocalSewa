@@ -125,12 +125,18 @@ export function Chatbot() {
           {/* Messages */}
           <div className="h-96 overflow-y-auto p-4 space-y-4 bg-gradient-to-br from-gray-50 to-blue-50/30">
             {messages.length === 0 ? (
-              <div className="text-center text-gray-500 py-16">
+              <div className="text-center text-gray-500 py-12 px-4">
                 <div className="w-20 h-20 bg-gradient-to-br from-purple-100 to-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
                   <Sparkles className="w-10 h-10 text-purple-600" />
                 </div>
-                <p className="text-lg font-semibold text-gray-700 mb-2">Hi! I'm your AI assistant</p>
-                <p className="text-sm text-gray-500">Ask me about services, prices, or locations!</p>
+                <p className="text-lg font-bold text-gray-800 mb-2">👋 Hello! I'm your LocalSewa AI Assistant</p>
+                <p className="text-sm text-gray-600 mb-4">I can help you find the perfect service provider in Kathmandu!</p>
+                <div className="bg-white rounded-xl p-4 text-left space-y-2 max-w-xs mx-auto border border-purple-100">
+                  <p className="text-xs font-semibold text-purple-600 mb-2">Try asking:</p>
+                  <p className="text-xs text-gray-700">💡 "I need a plumber"</p>
+                  <p className="text-xs text-gray-700">💰 "Electrician under 2000"</p>
+                  <p className="text-xs text-gray-700">📍 "Cleaning service in Tinkune"</p>
+                </div>
               </div>
             ) : (
               messages.map((message, index) => (
@@ -148,7 +154,11 @@ export function Chatbot() {
                           : 'bg-white text-gray-800 rounded-tl-sm border border-gray-100'
                       }`}
                     >
-                      <p className="text-sm leading-relaxed">{message.text}</p>
+                      <div className="text-sm leading-relaxed whitespace-pre-line">
+                        {message.text.split('**').map((part, idx) => 
+                          idx % 2 === 0 ? part : <strong key={idx} className="font-bold text-purple-600">{part}</strong>
+                        )}
+                      </div>
                       {message.suggestions && message.suggestions.length > 0 && (
                         <div className="mt-3 space-y-2">
                           <p className="text-xs font-semibold text-gray-600 mb-2">Suggested Services:</p>
