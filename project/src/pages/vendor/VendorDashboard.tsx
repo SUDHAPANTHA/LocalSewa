@@ -10,11 +10,7 @@ import {
   Calendar,
   MessageCircle,
   Plus,
-  Brain,
-  Sparkles,
-  Shield,
   Upload,
-  MapPin,
   ShieldCheck,
 } from "lucide-react";
 import { getApiErrorMessage } from "../../utils/errors";
@@ -29,38 +25,7 @@ export function VendorDashboard() {
     useState<ServiceProvider | null>(null);
   const [cvUploading, setCvUploading] = useState(false);
   const [selectedCvFile, setSelectedCvFile] = useState<File | null>(null);
-  const [locationSaving, setLocationSaving] = useState(false);
-  const [locationForm, setLocationForm] = useState({
-    lat: "",
-    lng: "",
-    formattedAddress: "",
-    serviceRadiusKm: "25",
-  });
   const { showToast, ToastComponent } = useToast();
-
-  const algorithms = [
-    {
-      title: "Personalized Service Recommendations",
-      description:
-        "Highlights the most in-demand services in your area so you can tailor offers and bundles.",
-      icon: Sparkles,
-      badge: "Recommendation",
-    },
-    {
-      title: "AI Pricing Assistant",
-      description:
-        "Suggests optimal price ranges by comparing your services with similar vendors and seasonal demand.",
-      icon: Brain,
-      badge: "AI",
-    },
-    {
-      title: "AI Quality Monitor",
-      description:
-        "Scans booking feedback and response times to detect issues early and protect your reputation.",
-      icon: Shield,
-      badge: "AI",
-    },
-  ];
 
   useEffect(() => {
     if (!user?.id) return;
@@ -79,26 +44,6 @@ export function VendorDashboard() {
       setBookings(bookingsRes.data.bookings);
       const profile = profileRes.data.provider;
       setProviderProfile(profile);
-      setLocationForm((prev) => ({
-        ...prev,
-        lat:
-          profile.location?.coordinates &&
-          typeof profile.location.coordinates[1] === "number"
-            ? profile.location.coordinates[1].toString()
-            : prev.lat,
-        lng:
-          profile.location?.coordinates &&
-          typeof profile.location.coordinates[0] === "number"
-            ? profile.location.coordinates[0].toString()
-            : prev.lng,
-        formattedAddress:
-          profile.location?.formattedAddress ||
-          profile.address ||
-          prev.formattedAddress,
-        serviceRadiusKm: profile.serviceRadiusKm
-          ? String(profile.serviceRadiusKm)
-          : prev.serviceRadiusKm,
-      }));
     } catch (error) {
       console.error("Failed to fetch data", error);
     } finally {
@@ -159,56 +104,6 @@ export function VendorDashboard() {
     }
   };
 
-  const handleDetectLocation = () => {
-    if (!navigator.geolocation) {
-      showToast("Geolocation not supported by this browser", "error");
-      return;
-    }
-    navigator.geolocation.getCurrentPosition(
-      (pos) => {
-        setLocationForm((prev) => ({
-          ...prev,
-          lat: pos.coords.latitude.toFixed(6),
-          lng: pos.coords.longitude.toFixed(6),
-        }));
-      },
-      (err) => {
-        console.error(err);
-        showToast("Unable to detect location", "error");
-      }
-    );
-  };
-
-  const handleLocationSave = async () => {
-    if (!user?.id) return;
-    const latNum = Number(locationForm.lat);
-    const lngNum = Number(locationForm.lng);
-
-    if (Number.isNaN(latNum) || Number.isNaN(lngNum)) {
-      showToast("Latitude and longitude are required", "error");
-      return;
-    }
-
-    setLocationSaving(true);
-    try {
-      await providerApi.updateLocation(user.id, {
-        lat: latNum,
-        lng: lngNum,
-        formattedAddress: locationForm.formattedAddress,
-        serviceRadiusKm: Number(locationForm.serviceRadiusKm) || undefined,
-      });
-      showToast("Service radius updated", "success");
-      fetchData(user.id);
-    } catch (error) {
-      showToast(
-        getApiErrorMessage(error, "Failed to update location"),
-        "error"
-      );
-    } finally {
-      setLocationSaving(false);
-    }
-  };
-
   const handleCvFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (file && file.type !== "application/pdf") {
@@ -237,26 +132,30 @@ export function VendorDashboard() {
         <div className="bg-gradient-to-br from-purple-600 to-black rounded-3xl shadow-2xl p-10 mb-8 relative overflow-hidden">
           <div className="absolute top-0 right-0 w-96 h-96 bg-purple-500/20 rounded-full blur-3xl -mr-48 -mt-48"></div>
           <div className="relative z-10">
-            <h1 className="text-5xl font-black text-white mb-2">Provider Hub</h1>
-            <p className="text-purple-100 text-lg">Welcome back, {user?.name}</p>
+            <h1 className="text-5xl font-black text-white mb-2">
+              Provider Hub
+            </h1>
+            <p className="text-purple-100 text-lg">
+              Welcome back, {user?.name}
+            </p>
           </div>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
           <div className="bg-black rounded-2xl shadow-lg p-8 text-white border border-purple-900/20">
             <Briefcase className="w-10 h-10 text-purple-400 mb-4" />
-            <h3 className="text-4xl font-black mb-2">
-              {services.length}
-            </h3>
-            <p className="text-gray-400 text-sm uppercase tracking-wider">Total Services</p>
+            <h3 className="text-4xl font-black mb-2">{services.length}</h3>
+            <p className="text-gray-400 text-sm uppercase tracking-wider">
+              Total Services
+            </p>
           </div>
 
           <div className="bg-purple-600 rounded-2xl shadow-lg p-8 text-white">
             <Calendar className="w-10 h-10 text-purple-200 mb-4" />
-            <h3 className="text-4xl font-black mb-2">
-              {bookings.length}
-            </h3>
-            <p className="text-purple-100 text-sm uppercase tracking-wider">Total Bookings</p>
+            <h3 className="text-4xl font-black mb-2">{bookings.length}</h3>
+            <p className="text-purple-100 text-sm uppercase tracking-wider">
+              Total Bookings
+            </p>
           </div>
 
           <div className="bg-white rounded-2xl shadow-lg p-8 border-2 border-black">
@@ -264,7 +163,9 @@ export function VendorDashboard() {
             <h3 className="text-4xl font-black text-black mb-2">
               {pendingBookings.length}
             </h3>
-            <p className="text-gray-600 text-sm uppercase tracking-wider">Pending Requests</p>
+            <p className="text-gray-600 text-sm uppercase tracking-wider">
+              Pending Requests
+            </p>
           </div>
         </div>
 
@@ -372,8 +273,6 @@ export function VendorDashboard() {
               </p>
             )}
           </section>
-
-
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -402,9 +301,7 @@ export function VendorDashboard() {
               <Calendar className="w-8 h-8 text-white" />
             </div>
             <div>
-              <h3 className="text-2xl font-black mb-2">
-                View Bookings
-              </h3>
+              <h3 className="text-2xl font-black mb-2">View Bookings</h3>
               <p className="text-purple-100">Manage customer bookings</p>
             </div>
           </a>
@@ -417,13 +314,17 @@ export function VendorDashboard() {
               <MessageCircle className="w-8 h-8 text-purple-600 group-hover:text-white transition-colors duration-300" />
             </div>
             <div>
-              <h3 className="text-2xl font-black mb-2 group-hover:text-white transition-colors duration-300">Messages</h3>
-              <p className="text-gray-600 group-hover:text-gray-300 transition-colors duration-300">Chat with customers</p>
+              <h3 className="text-2xl font-black mb-2 group-hover:text-white transition-colors duration-300">
+                Messages
+              </h3>
+              <p className="text-gray-600 group-hover:text-gray-300 transition-colors duration-300">
+                Chat with customers
+              </p>
             </div>
           </a>
         </div>
-
       </div>
     </Layout>
   );
 }
+
