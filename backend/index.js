@@ -3200,6 +3200,24 @@ app.get("/complaints/provider/:providerId", async (req, res) => {
   }
 });
 
+// Get all complaints (Admin only)
+app.get("/complaints/all", async (req, res) => {
+  try {
+    const complaints = await Complaint.find({})
+      .populate("service", "name emojiIcon price priceNpr priceLabel currency")
+      .populate("user", "name email")
+      .populate("provider", "name email")
+      .populate("booking", "confirmationCode status bookingDate bookingTime")
+      .sort({ createdAt: -1 });
+
+    res.json({ success: true, complaints });
+  } catch (err) {
+    res
+      .status(500)
+      .json({ msg: "Failed to load all complaints", error: err.message });
+  }
+});
+
 app.patch("/complaints/:id", async (req, res) => {
   try {
     const { id } = req.params;

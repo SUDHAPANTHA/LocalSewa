@@ -17,6 +17,9 @@ import { AdminProviders } from "./pages/admin/AdminProviders";
 import { AdminBookings } from "./pages/admin/AdminBookings";
 import { AdminUsers } from "./pages/admin/AdminUsers";
 import { AdminServices } from "./pages/admin/AdminServices";
+import { AdminComplaints } from "./pages/admin/AdminComplaints";
+import { UserComplaints } from "./pages/user/UserComplaints";
+import { VendorComplaints } from "./pages/vendor/VendorComplaints";
 import { Chat } from "./pages/Chat";
 
 function App() {
@@ -92,6 +95,12 @@ function App() {
             <UserBookings />
           </ProtectedRoute>
         );
+      case "/user/complaints":
+        return (
+          <ProtectedRoute allowedRoles={["user"]}>
+            <UserComplaints />
+          </ProtectedRoute>
+        );
       case "/user/chat":
       case "/vendor/chat":
         return (
@@ -115,6 +124,12 @@ function App() {
         return (
           <ProtectedRoute allowedRoles={["service_provider"]}>
             <VendorBookings />
+          </ProtectedRoute>
+        );
+      case "/vendor/complaints":
+        return (
+          <ProtectedRoute allowedRoles={["service_provider"]}>
+            <VendorComplaints />
           </ProtectedRoute>
         );
       case "/admin/dashboard":
@@ -145,6 +160,12 @@ function App() {
         return (
           <ProtectedRoute allowedRoles={["admin"]}>
             <AdminServices />
+          </ProtectedRoute>
+        );
+      case "/admin/complaints":
+        return (
+          <ProtectedRoute allowedRoles={["admin"]}>
+            <AdminComplaints />
           </ProtectedRoute>
         );
       default:
