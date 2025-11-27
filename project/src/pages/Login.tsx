@@ -34,12 +34,22 @@ export function Login() {
       showToast("Login successful!", "success");
 
       setTimeout(() => {
-        if (role === "admin") {
-          window.location.hash = "/admin/dashboard";
-        } else if (role === "service_provider") {
-          window.location.hash = "/vendor/dashboard";
+        // Check if there's a saved redirect path
+        const redirectPath = sessionStorage.getItem('redirectAfterLogin');
+        
+        if (redirectPath) {
+          // Clear the saved path and redirect to it
+          sessionStorage.removeItem('redirectAfterLogin');
+          window.location.hash = redirectPath;
         } else {
-          window.location.hash = "/user/dashboard";
+          // Default dashboard based on role
+          if (role === "admin") {
+            window.location.hash = "/admin/dashboard";
+          } else if (role === "service_provider") {
+            window.location.hash = "/vendor/dashboard";
+          } else {
+            window.location.hash = "/user/dashboard";
+          }
         }
       }, 500);
     } catch (error) {

@@ -20,11 +20,44 @@ import { AdminServices } from "./pages/admin/AdminServices";
 import { Chat } from "./pages/Chat";
 
 function App() {
-  const [currentPath, setCurrentPath] = useState(window.location.hash || "#/");
+  // Check if session is fresh (new tab or browser restart)
+  const getInitialPath = () => {
+    const lastActivity = sessionStorage.getItem('lastActivity');
+    const now = Date.now();
+    const fiveMinutes = 5 * 60 * 1000;
+    
+    // If no recent activity (new tab/session), go to homepage
+    if (!lastActivity || (now - parseInt(lastActivity)) > fiveMinutes) {
+      sessionStorage.setItem('lastActivity', now.toString());
+      return '#/';
+    }
+    
+    // Recent activity, keep current hash
+    sessionStorage.setItem('lastActivity', now.toString());
+    return window.location.hash || '#/';
+  };
+
+  const [currentPath, setCurrentPath] = useState(getInitialPath());
+
+  useEffect(() => {
+    // Update last activity on any interaction
+    const updateActivity = () => {
+      sessionStorage.setItem('lastActivity', Date.now().toString());
+    };
+
+    window.addEventListener('click', updateActivity);
+    window.addEventListener('keydown', updateActivity);
+    
+    return () => {
+      window.removeEventListener('click', updateActivity);
+      window.removeEventListener('keydown', updateActivity);
+    };
+  }, []);
 
   useEffect(() => {
     const handleHashChange = () => {
       setCurrentPath(window.location.hash || "#/");
+      sessionStorage.setItem('lastActivity', Date.now().toString());
     };
 
     window.addEventListener("hashchange", handleHashChange);

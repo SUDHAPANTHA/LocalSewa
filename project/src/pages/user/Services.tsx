@@ -551,17 +551,23 @@ export function Services() {
 
   // If locality is selected, show locality-specific services
   if (selectedArea) {
-    if (localityServices.length > 0) {
-      // Show API services from the locality
-      filteredServices = localityServices;
+    // First, get hardcoded services from exact locality
+    const exactLocalityHardcoded = HARDCODED_SERVICES.filter(
+      (service: any) => service.localitySlug === selectedArea.slug
+    );
+
+    // Combine API services with hardcoded services from exact locality
+    const exactLocalityServices = [...localityServices, ...exactLocalityHardcoded];
+
+    if (exactLocalityServices.length > 0) {
+      // Show services from exact locality (both API and hardcoded)
+      filteredServices = exactLocalityServices;
     } else if (showingNearby && nearbyServices.length > 0) {
-      // Show nearby API services
+      // No services in exact locality, show nearby API services
       filteredServices = nearbyServices;
     } else {
-      // No API services, filter hardcoded services by locality
-      filteredServices = HARDCODED_SERVICES.filter(
-        (service: any) => service.localitySlug === selectedArea.slug
-      );
+      // No services found at all
+      filteredServices = [];
     }
   } else {
     // No locality selected, filter by search query
@@ -711,6 +717,7 @@ export function Services() {
         {/* No Services in Area - Show Nearby */}
         {selectedArea &&
           localityServices.length === 0 &&
+          HARDCODED_SERVICES.filter((s: any) => s.localitySlug === selectedArea.slug).length === 0 &&
           nearbyServices.length > 0 &&
           !showingNearby && (
             <div className="bg-amber-50 border border-amber-200 rounded-2xl p-6">

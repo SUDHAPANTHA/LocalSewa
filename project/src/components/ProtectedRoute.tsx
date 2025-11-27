@@ -11,6 +11,11 @@ export function ProtectedRoute({ children, allowedRoles }: ProtectedRouteProps) 
   const { user, isAuthenticated } = useAuth();
 
   if (!isAuthenticated) {
+    // Save current path to return after login
+    const currentPath = window.location.hash.replace('#', '');
+    if (currentPath && currentPath !== '/login' && currentPath !== '/register') {
+      sessionStorage.setItem('redirectAfterLogin', currentPath);
+    }
     return <Navigate to="/login" />;
   }
 
