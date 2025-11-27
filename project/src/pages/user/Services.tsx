@@ -18,8 +18,12 @@ import {
   AlertCircle,
 } from "lucide-react";
 import { LocalityAutocomplete } from "../../components/LocalityAutocomplete";
+import { HARDCODED_SERVICES } from "../../data/hardcodedServices";
 
-const HARDCODED_SERVICES = [
+// Hardcoded services now imported from separate file
+// Total: 31 services covering all Kathmandu areas
+
+const OLD_HARDCODED_SERVICES_BELOW_WILL_BE_REMOVED = [
   {
     _id: "hc1",
     name: "Home Plumbing Service",
