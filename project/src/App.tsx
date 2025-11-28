@@ -25,19 +25,39 @@ import { Chat } from "./pages/Chat";
 function App() {
   // Check if session is fresh (new tab or browser restart)
   const getInitialPath = () => {
-    const lastActivity = sessionStorage.getItem('lastActivity');
+    const lastActivity = sessionStorage.getItem("lastActivity");
+    const storedUser = localStorage.getItem("user");
     const now = Date.now();
     const fiveMinutes = 5 * 60 * 1000;
-    
-    // If no recent activity (new tab/session), go to homepage
-    if (!lastActivity || (now - parseInt(lastActivity)) > fiveMinutes) {
-      sessionStorage.setItem('lastActivity', now.toString());
-      return '#/';
+
+    // If user is logged in, keep current hash or redirect to appropriate dashboard
+    if (storedUser) {
+      sessionStorage.setItem("lastActivity", now.toString());
+      const currentHash = window.location.hash || "#/";
+      
+      // If on homepage or login/register, redirect to dashboard
+      if (currentHash === "#/" || currentHash === "#/login" || currentHash === "#/register") {
+        try {
+          const user = JSON.parse(storedUser);
+          if (user.role === "admin") return "#/admin/dashboard";
+          if (user.role === "service_provider") return "#/vendor/dashboard";
+          if (user.role === "user") return "#/user/dashboard";
+        } catch (e) {
+          return currentHash;
+        }
+      }
+      return currentHash;
     }
-    
+
+    // If no recent activity (new tab/session) and not logged in, go to homepage
+    if (!lastActivity || now - parseInt(lastActivity) > fiveMinutes) {
+      sessionStorage.setItem("lastActivity", now.toString());
+      return "#/";
+    }
+
     // Recent activity, keep current hash
-    sessionStorage.setItem('lastActivity', now.toString());
-    return window.location.hash || '#/';
+    sessionStorage.setItem("lastActivity", now.toString());
+    return window.location.hash || "#/";
   };
 
   const [currentPath, setCurrentPath] = useState(getInitialPath());
@@ -45,22 +65,22 @@ function App() {
   useEffect(() => {
     // Update last activity on any interaction
     const updateActivity = () => {
-      sessionStorage.setItem('lastActivity', Date.now().toString());
+      sessionStorage.setItem("lastActivity", Date.now().toString());
     };
 
-    window.addEventListener('click', updateActivity);
-    window.addEventListener('keydown', updateActivity);
-    
+    window.addEventListener("click", updateActivity);
+    window.addEventListener("keydown", updateActivity);
+
     return () => {
-      window.removeEventListener('click', updateActivity);
-      window.removeEventListener('keydown', updateActivity);
+      window.removeEventListener("click", updateActivity);
+      window.removeEventListener("keydown", updateActivity);
     };
   }, []);
 
   useEffect(() => {
     const handleHashChange = () => {
       setCurrentPath(window.location.hash || "#/");
-      sessionStorage.setItem('lastActivity', Date.now().toString());
+      sessionStorage.setItem("lastActivity", Date.now().toString());
     };
 
     window.addEventListener("hashchange", handleHashChange);
@@ -179,7 +199,6 @@ function App() {
         return <Home />;
     }
   };
-  
 
   return (
     <AuthProvider>

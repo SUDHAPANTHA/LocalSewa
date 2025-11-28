@@ -383,7 +383,9 @@ export function Services() {
   const [selectedService, setSelectedService] = useState<Service | null>(null);
   const [scheduledDate, setScheduledDate] = useState("");
   const [bookingLoading, setBookingLoading] = useState(false);
-  const [userBookedProviderIds, setUserBookedProviderIds] = useState<Set<string>>(new Set());
+  const [userBookedProviderIds, setUserBookedProviderIds] = useState<
+    Set<string>
+  >(new Set());
   const [duplicateError, setDuplicateError] = useState<any>(null);
   const [showAlternatives, setShowAlternatives] = useState(false);
   const [hideBookedProviders, setHideBookedProviders] = useState(false);
@@ -399,39 +401,45 @@ export function Services() {
         console.error("Failed to fetch areas", error);
       }
     };
-    
+
     fetchAreas();
   }, []);
 
   // Fetch user's active bookings to check which providers are already booked
   useEffect(() => {
     if (!user?.id) return;
-    
+
     const fetchUserBookings = async () => {
       try {
         const response = await bookingsApi.getUserBookings(user.id);
         const responseData = response.data as any;
-        const bookings = responseData?.data?.bookings || responseData?.bookings || [];
-        
+        const bookings =
+          responseData?.data?.bookings || responseData?.bookings || [];
+
         // Extract provider IDs from ACTIVE bookings only (pending, confirmed, scheduled)
         const bookedProviderIds = new Set<string>();
         bookings.forEach((booking: any) => {
           // Only consider active bookings
           const status = booking.status?.toLowerCase();
-          if (status === 'pending' || status === 'confirmed' || status === 'scheduled') {
-            const providerId = typeof booking.provider === 'object' 
-              ? booking.provider._id 
-              : booking.provider;
+          if (
+            status === "pending" ||
+            status === "confirmed" ||
+            status === "scheduled"
+          ) {
+            const providerId =
+              typeof booking.provider === "object"
+                ? booking.provider._id
+                : booking.provider;
             if (providerId) bookedProviderIds.add(providerId);
           }
         });
-        
+
         setUserBookedProviderIds(bookedProviderIds);
       } catch (error) {
         console.error("Failed to fetch user bookings", error);
       }
     };
-    
+
     fetchUserBookings();
   }, [user?.id]);
 
@@ -525,10 +533,13 @@ export function Services() {
     };
   }, []); // Empty dependency array - only run once on mount
 
-
-
   // Calculate distance between two coordinates using Haversine formula
-  const calculateDistance = (lat1: number, lng1: number, lat2: number, lng2: number): number => {
+  const calculateDistance = (
+    lat1: number,
+    lng1: number,
+    lat2: number,
+    lng2: number
+  ): number => {
     const toRad = (deg: number) => (deg * Math.PI) / 180;
     const R = 6371; // Earth's radius in km
 
@@ -549,25 +560,35 @@ export function Services() {
   // Get distance for a service based on selected area
   const getServiceDistance = (service: any): number | null => {
     if (!selectedArea) {
-      console.log('No area selected, cannot calculate distance');
+      console.log("No area selected, cannot calculate distance");
       return null;
     }
 
-    console.log('Calculating distance for service:', service.name, 'from area:', selectedArea.name);
-    console.log('All areas loaded:', allAreas.length);
+    console.log(
+      "Calculating distance for service:",
+      service.name,
+      "from area:",
+      selectedArea.name
+    );
+    console.log("All areas loaded:", allAreas.length);
 
     // For hardcoded services, use their locality coordinates
     if (service.isHardcoded && (service as any).localitySlug) {
-      console.log('Hardcoded service with locality:', (service as any).localitySlug);
-      
+      console.log(
+        "Hardcoded service with locality:",
+        (service as any).localitySlug
+      );
+
       // If it's the same area, distance is 0
       if ((service as any).localitySlug === selectedArea.slug) {
-        console.log('Same area, distance = 0');
+        console.log("Same area, distance = 0");
         return 0;
       }
-      
+
       // Find the provider's area in allAreas
-      const providerArea = allAreas.find(a => a.slug === (service as any).localitySlug);
+      const providerArea = allAreas.find(
+        (a) => a.slug === (service as any).localitySlug
+      );
       if (providerArea) {
         const distance = calculateDistance(
           selectedArea.coordinates.lat,
@@ -575,22 +596,32 @@ export function Services() {
           providerArea.coordinates.lat,
           providerArea.coordinates.lng
         );
-        console.log('Calculated distance for hardcoded service:', distance, 'km');
+        console.log(
+          "Calculated distance for hardcoded service:",
+          distance,
+          "km"
+        );
         return distance;
       }
-      
-      console.log('Provider area not found in allAreas');
+
+      console.log("Provider area not found in allAreas");
       return null;
     }
 
     // Get provider location
-    const provider = typeof service.provider === 'object' ? service.provider : null;
+    const provider =
+      typeof service.provider === "object" ? service.provider : null;
     if (!provider) {
-      console.log('No provider object found');
+      console.log("No provider object found");
       return null;
     }
 
-    console.log('Provider:', provider.name, 'primaryAreaSlug:', provider.primaryAreaSlug);
+    console.log(
+      "Provider:",
+      provider.name,
+      "primaryAreaSlug:",
+      provider.primaryAreaSlug
+    );
 
     // Try to get coordinates from provider location
     const providerCoords = provider.location?.coordinates;
@@ -601,7 +632,7 @@ export function Services() {
         providerCoords[1], // GeoJSON is [lng, lat]
         providerCoords[0]
       );
-      console.log('Calculated distance from coordinates:', distance, 'km');
+      console.log("Calculated distance from coordinates:", distance, "km");
       return distance;
     }
 
@@ -609,12 +640,14 @@ export function Services() {
     if (provider.primaryAreaSlug) {
       // If same area, distance is 0
       if (provider.primaryAreaSlug === selectedArea.slug) {
-        console.log('Same area (primaryAreaSlug), distance = 0');
+        console.log("Same area (primaryAreaSlug), distance = 0");
         return 0;
       }
-      
+
       // Find the provider's area in allAreas
-      const providerArea = allAreas.find(a => a.slug === provider.primaryAreaSlug);
+      const providerArea = allAreas.find(
+        (a) => a.slug === provider.primaryAreaSlug
+      );
       if (providerArea) {
         const distance = calculateDistance(
           selectedArea.coordinates.lat,
@@ -622,14 +655,21 @@ export function Services() {
           providerArea.coordinates.lat,
           providerArea.coordinates.lng
         );
-        console.log('Calculated distance from primaryAreaSlug:', distance, 'km');
+        console.log(
+          "Calculated distance from primaryAreaSlug:",
+          distance,
+          "km"
+        );
         return distance;
       }
-      
-      console.log('Provider area not found in allAreas for slug:', provider.primaryAreaSlug);
+
+      console.log(
+        "Provider area not found in allAreas for slug:",
+        provider.primaryAreaSlug
+      );
     }
 
-    console.log('Could not calculate distance - no location data available');
+    console.log("Could not calculate distance - no location data available");
     return null;
   };
 
@@ -670,42 +710,41 @@ export function Services() {
   };
 
   // Show only real vendor services (no demo/hardcoded services)
-  const allServices = [...vendorServices].sort(
-    (a, b) => {
-      // If area is selected, prioritize distance-based sorting
-      if (selectedArea) {
-        const distA = getServiceDistance(a);
-        const distB = getServiceDistance(b);
-        
-        // Both have distance - sort by distance first
-        if (distA !== null && distB !== null) {
-          if (Math.abs(distA - distB) > 0.5) { // If distance difference > 0.5km
-            return distA - distB; // Closer first
-          }
+  const allServices = [...vendorServices].sort((a, b) => {
+    // If area is selected, prioritize distance-based sorting
+    if (selectedArea) {
+      const distA = getServiceDistance(a);
+      const distB = getServiceDistance(b);
+
+      // Both have distance - sort by distance first
+      if (distA !== null && distB !== null) {
+        if (Math.abs(distA - distB) > 0.5) {
+          // If distance difference > 0.5km
+          return distA - distB; // Closer first
         }
-        
-        // One has distance, other doesn't - prioritize the one with distance
-        if (distA !== null && distB === null) return -1;
-        if (distA === null && distB !== null) return 1;
       }
-      
-      // Fall back to recommendation score
-      const scoreA = getRecommendationScore(a);
-      const scoreB = getRecommendationScore(b);
-      return scoreB - scoreA; // Higher score first
+
+      // One has distance, other doesn't - prioritize the one with distance
+      if (distA !== null && distB === null) return -1;
+      if (distA === null && distB !== null) return 1;
     }
-  );
+
+    // Fall back to recommendation score
+    const scoreA = getRecommendationScore(a);
+    const scoreB = getRecommendationScore(b);
+    return scoreB - scoreA; // Higher score first
+  });
 
   // Filter services based on search query and locality
   let filteredServices = allServices;
 
-  // If locality is selected, show only NEAREST services (within 3km radius)
+  // If locality is selected, show only NEAREST services (within 10km radius)
   if (selectedArea) {
-    const MAX_DISTANCE_KM = 3; // Only show services within 3km
-    
+    const MAX_DISTANCE_KM = 10; // Only show services within 10km
+
     filteredServices = allServices.filter((service) => {
       const distance = getServiceDistance(service);
-      // Include services with distance <= 3km, or services without distance data
+      // Include services with distance <= 10km, or services without distance data
       return distance === null || distance <= MAX_DISTANCE_KM;
     });
   } else {
@@ -726,9 +765,10 @@ export function Services() {
   // Apply booked provider filter if enabled
   if (hideBookedProviders && user) {
     filteredServices = filteredServices.filter((service) => {
-      const providerId = typeof service.provider === 'object' 
-        ? service.provider._id 
-        : service.provider;
+      const providerId =
+        typeof service.provider === "object"
+          ? service.provider._id
+          : service.provider;
       return providerId ? !userBookedProviderIds.has(providerId) : true;
     });
   }
@@ -736,9 +776,9 @@ export function Services() {
   // Get unique nearby areas from filtered services (when area is selected)
   const getNearbyAreasFromServices = (): string[] => {
     if (!selectedArea || filteredServices.length === 0) return [];
-    
+
     const nearbyAreas = new Set<string>();
-    
+
     filteredServices.forEach((service) => {
       // For hardcoded services
       if (service.isHardcoded && (service as any).locality) {
@@ -747,15 +787,16 @@ export function Services() {
           nearbyAreas.add(locality);
         }
       }
-      
+
       // For vendor services
-      const provider = typeof service.provider === 'object' ? service.provider : null;
+      const provider =
+        typeof service.provider === "object" ? service.provider : null;
       const areaName = (provider as any)?.primaryAreaName;
       if (areaName && areaName !== selectedArea.name) {
         nearbyAreas.add(areaName);
       }
     });
-    
+
     return Array.from(nearbyAreas).slice(0, 5); // Limit to 5 areas
   };
 
@@ -807,7 +848,7 @@ export function Services() {
       bookingDate,
       bookingTime,
     };
-    
+
     console.log("=== BOOKING ATTEMPT ===");
     console.log("Booking data:", bookingData);
     console.log("Service:", selectedService);
@@ -825,31 +866,37 @@ export function Services() {
       const confirmation = responseData?.booking?.confirmationCode || "pending";
 
       showToast(`Booking received! Confirmation ${confirmation}`, "success");
-      
+
       // Refresh user bookings to update the booked providers list
       if (user?.id) {
         try {
           const bookingsResponse = await bookingsApi.getUserBookings(user.id);
           const bookingsData = bookingsResponse.data as any;
-          const bookings = bookingsData?.data?.bookings || bookingsData?.bookings || [];
-          
+          const bookings =
+            bookingsData?.data?.bookings || bookingsData?.bookings || [];
+
           const bookedProviderIds = new Set<string>();
           bookings.forEach((booking: any) => {
             const status = booking.status?.toLowerCase();
-            if (status === 'pending' || status === 'confirmed' || status === 'scheduled') {
-              const bookingProviderId = typeof booking.provider === 'object' 
-                ? booking.provider._id 
-                : booking.provider;
+            if (
+              status === "pending" ||
+              status === "confirmed" ||
+              status === "scheduled"
+            ) {
+              const bookingProviderId =
+                typeof booking.provider === "object"
+                  ? booking.provider._id
+                  : booking.provider;
               if (bookingProviderId) bookedProviderIds.add(bookingProviderId);
             }
           });
-          
+
           setUserBookedProviderIds(bookedProviderIds);
         } catch (err) {
           console.error("Failed to refresh bookings", err);
         }
       }
-      
+
       setSelectedService(null);
       setScheduledDate("");
       setDuplicateError(null);
@@ -859,14 +906,17 @@ export function Services() {
       console.error("Error response:", error.response?.data);
 
       // Check if it's a duplicate booking error
-      if (error.response?.status === 409 && error.response?.data?.error === "DUPLICATE_BOOKING") {
+      if (
+        error.response?.status === 409 &&
+        error.response?.data?.error === "DUPLICATE_BOOKING"
+      ) {
         const errorData = error.response.data;
         console.log("Duplicate booking error data:", errorData);
         console.log("Alternatives:", errorData.alternatives);
         console.log("Alternatives length:", errorData.alternatives?.length);
-        
+
         setDuplicateError(errorData);
-        
+
         // Show alternatives if available
         if (errorData.alternatives && errorData.alternatives.length > 0) {
           console.log("Setting showAlternatives to true");
@@ -877,7 +927,11 @@ export function Services() {
           );
         } else {
           console.log("No alternatives available");
-          showToast(errorData.message || "You already have an active booking with this provider", "error");
+          showToast(
+            errorData.message ||
+              "You already have an active booking with this provider",
+            "error"
+          );
         }
       } else {
         // Show specific error message from backend
@@ -885,7 +939,7 @@ export function Services() {
         console.log("Status:", error.response?.status);
         console.log("Error data:", error.response?.data);
         console.log("Error message:", error.message);
-        
+
         const errorMessage =
           error.response?.data?.msg ||
           error.response?.data?.message ||
@@ -977,8 +1031,6 @@ export function Services() {
           </div>
         </div>
 
-
-
         {/* Services List */}
         <section>
           <div className="flex items-center justify-between mb-6">
@@ -1031,10 +1083,14 @@ export function Services() {
                             </span>
                           )}
                           {(() => {
-                            const providerId = typeof service.provider === 'object' 
-                              ? service.provider._id 
-                              : service.provider;
-                            return providerId && userBookedProviderIds.has(providerId);
+                            const providerId =
+                              typeof service.provider === "object"
+                                ? service.provider._id
+                                : service.provider;
+                            return (
+                              providerId &&
+                              userBookedProviderIds.has(providerId)
+                            );
                           })() && (
                             <span className="px-2 py-1 bg-purple-100 text-purple-700 text-xs rounded-full font-bold">
                               ✓ Booked
@@ -1059,16 +1115,19 @@ export function Services() {
                     </span>
                     {(() => {
                       const distance = getServiceDistance(service);
-                      
+
                       // Get area name for the service
                       let areaName = null;
                       if (service.isHardcoded && (service as any).locality) {
                         areaName = (service as any).locality;
                       } else {
-                        const provider = typeof service.provider === 'object' ? service.provider : null;
+                        const provider =
+                          typeof service.provider === "object"
+                            ? service.provider
+                            : null;
                         areaName = (provider as any)?.primaryAreaName || null;
                       }
-                      
+
                       if (distance !== null && selectedArea) {
                         // Show distance with area name
                         if (distance === 0) {
@@ -1082,7 +1141,8 @@ export function Services() {
                         return (
                           <span className="flex items-center gap-1 text-blue-600 font-medium">
                             <MapPin className="w-4 h-4" />
-                            {areaName ? `${areaName} - ` : ''}{distance} km away
+                            {areaName ? `${areaName} - ` : ""}
+                            {distance} km away
                           </span>
                         );
                       }
@@ -1106,11 +1166,13 @@ export function Services() {
                       </p>
                     </div>
                     {(() => {
-                      const providerId = typeof service.provider === 'object' 
-                        ? service.provider._id 
-                        : service.provider;
-                      const isBooked = providerId && userBookedProviderIds.has(providerId);
-                      
+                      const providerId =
+                        typeof service.provider === "object"
+                          ? service.provider._id
+                          : service.provider;
+                      const isBooked =
+                        providerId && userBookedProviderIds.has(providerId);
+
                       if (isBooked) {
                         return (
                           <button
@@ -1122,7 +1184,7 @@ export function Services() {
                           </button>
                         );
                       }
-                      
+
                       return (
                         <button
                           onClick={() => setSelectedService(service)}
@@ -1186,125 +1248,138 @@ export function Services() {
                   </p>
                 </div>
               )}
-                {/* Duplicate Booking Error with Alternatives */}
-                {duplicateError && showAlternatives && (() => {
+              {/* Duplicate Booking Error with Alternatives */}
+              {duplicateError &&
+                showAlternatives &&
+                (() => {
                   console.log("Rendering duplicate error modal");
                   console.log("duplicateError:", duplicateError);
                   console.log("showAlternatives:", showAlternatives);
                   return (
-                  <div className="bg-red-50 border border-red-200 rounded-xl p-4 space-y-4">
-                    <div className="flex items-start gap-3">
-                      <AlertCircle className="w-5 h-5 text-red-600 flex-shrink-0 mt-0.5" />
-                      <div>
-                        <h4 className="font-semibold text-red-900">Already Booked</h4>
-                        <p className="text-sm text-red-700 mt-1">
-                          {duplicateError.message}
-                        </p>
-                        {duplicateError.existingBooking && (
-                          <p className="text-xs text-red-600 mt-2">
-                            Existing booking: {duplicateError.existingBooking.confirmationCode} 
-                            {duplicateError.existingBooking.bookingDate && 
-                              ` on ${duplicateError.existingBooking.bookingDate}`}
+                    <div className="bg-red-50 border border-red-200 rounded-xl p-4 space-y-4">
+                      <div className="flex items-start gap-3">
+                        <AlertCircle className="w-5 h-5 text-red-600 flex-shrink-0 mt-0.5" />
+                        <div>
+                          <h4 className="font-semibold text-red-900">
+                            Already Booked
+                          </h4>
+                          <p className="text-sm text-red-700 mt-1">
+                            {duplicateError.message}
                           </p>
-                        )}
-                      </div>
-                    </div>
-
-                    {/* Alternative Providers */}
-                    {duplicateError.alternatives && duplicateError.alternatives.length > 0 && (() => {
-                      console.log("Rendering alternatives section, count:", duplicateError.alternatives.length);
-                      return (
-                      <div className="space-y-3">
-                        <h5 className="font-semibold text-slate-900 text-sm flex items-center gap-2">
-                          <MapPin className="w-4 h-4 text-blue-600" />
-                          Try these nearby alternatives instead:
-                        </h5>
-                        <div className="space-y-2 max-h-64 overflow-y-auto">
-                          {duplicateError.alternatives.map((alt: any, idx: number) => {
-                            // Check if this is the nearest alternative
-                            const isNearest = idx === 0 && alt.distanceKm !== null;
-                            
-                            return (
-                              <div
-                                key={idx}
-                                className={`bg-white border rounded-lg p-3 hover:border-blue-400 transition cursor-pointer ${
-                                  isNearest 
-                                    ? 'border-blue-300 ring-2 ring-blue-100' 
-                                    : 'border-slate-200'
-                                }`}
-                                onClick={() => {
-                                  // Find the service in our list and select it
-                                  const altService = allServices.find(
-                                    (s) => s._id === alt.service.id
-                                  );
-                                  if (altService) {
-                                    setSelectedService(altService);
-                                    setDuplicateError(null);
-                                    setShowAlternatives(false);
-                                  }
-                                }}
-                              >
-                                <div className="flex items-start justify-between gap-2">
-                                  <div className="flex-1">
-                                    <div className="flex items-center gap-2">
-                                      <p className="font-medium text-slate-900 text-sm">
-                                        {alt.provider.name}
-                                      </p>
-                                      {isNearest && (
-                                        <span className="px-2 py-0.5 bg-blue-100 text-blue-700 text-xs rounded-full font-bold">
-                                          Nearest
-                                        </span>
-                                      )}
-                                    </div>
-                                    <p className="text-xs text-slate-600 mt-0.5">
-                                      {alt.service.name}
-                                    </p>
-                                    {alt.distanceKm !== null && (
-                                      <p className="text-xs text-blue-600 mt-1 flex items-center gap-1 font-medium">
-                                        <MapPin className="w-3 h-3" />
-                                        {alt.distanceKm} km away
-                                      </p>
-                                    )}
-                                  </div>
-                                  <div className="text-right">
-                                    <p className="font-bold text-slate-900">
-                                      {formatNpr(alt.service.price)}
-                                    </p>
-                                  </div>
-                                </div>
-                              </div>
-                            );
-                          })}
+                          {duplicateError.existingBooking && (
+                            <p className="text-xs text-red-600 mt-2">
+                              Existing booking:{" "}
+                              {duplicateError.existingBooking.confirmationCode}
+                              {duplicateError.existingBooking.bookingDate &&
+                                ` on ${duplicateError.existingBooking.bookingDate}`}
+                            </p>
+                          )}
                         </div>
                       </div>
-                      );
-                    })()}
 
-                    <button
-                      onClick={() => {
-                        setDuplicateError(null);
-                        setShowAlternatives(false);
-                      }}
-                      className="text-sm text-red-700 hover:text-red-900 font-medium"
-                    >
-                      Dismiss
-                    </button>
-                  </div>
+                      {/* Alternative Providers */}
+                      {duplicateError.alternatives &&
+                        duplicateError.alternatives.length > 0 &&
+                        (() => {
+                          console.log(
+                            "Rendering alternatives section, count:",
+                            duplicateError.alternatives.length
+                          );
+                          return (
+                            <div className="space-y-3">
+                              <h5 className="font-semibold text-slate-900 text-sm flex items-center gap-2">
+                                <MapPin className="w-4 h-4 text-blue-600" />
+                                Try these nearby alternatives instead:
+                              </h5>
+                              <div className="space-y-2 max-h-64 overflow-y-auto">
+                                {duplicateError.alternatives.map(
+                                  (alt: any, idx: number) => {
+                                    // Check if this is the nearest alternative
+                                    const isNearest =
+                                      idx === 0 && alt.distanceKm !== null;
+
+                                    return (
+                                      <div
+                                        key={idx}
+                                        className={`bg-white border rounded-lg p-3 hover:border-blue-400 transition cursor-pointer ${
+                                          isNearest
+                                            ? "border-blue-300 ring-2 ring-blue-100"
+                                            : "border-slate-200"
+                                        }`}
+                                        onClick={() => {
+                                          // Find the service in our list and select it
+                                          const altService = allServices.find(
+                                            (s) => s._id === alt.service.id
+                                          );
+                                          if (altService) {
+                                            setSelectedService(altService);
+                                            setDuplicateError(null);
+                                            setShowAlternatives(false);
+                                          }
+                                        }}
+                                      >
+                                        <div className="flex items-start justify-between gap-2">
+                                          <div className="flex-1">
+                                            <div className="flex items-center gap-2">
+                                              <p className="font-medium text-slate-900 text-sm">
+                                                {alt.provider.name}
+                                              </p>
+                                              {isNearest && (
+                                                <span className="px-2 py-0.5 bg-blue-100 text-blue-700 text-xs rounded-full font-bold">
+                                                  Nearest
+                                                </span>
+                                              )}
+                                            </div>
+                                            <p className="text-xs text-slate-600 mt-0.5">
+                                              {alt.service.name}
+                                            </p>
+                                            {alt.distanceKm !== null && (
+                                              <p className="text-xs text-blue-600 mt-1 flex items-center gap-1 font-medium">
+                                                <MapPin className="w-3 h-3" />
+                                                {alt.distanceKm} km away
+                                              </p>
+                                            )}
+                                          </div>
+                                          <div className="text-right">
+                                            <p className="font-bold text-slate-900">
+                                              {formatNpr(alt.service.price)}
+                                            </p>
+                                          </div>
+                                        </div>
+                                      </div>
+                                    );
+                                  }
+                                )}
+                              </div>
+                            </div>
+                          );
+                        })()}
+
+                      <button
+                        onClick={() => {
+                          setDuplicateError(null);
+                          setShowAlternatives(false);
+                        }}
+                        className="text-sm text-red-700 hover:text-red-900 font-medium"
+                      >
+                        Dismiss
+                      </button>
+                    </div>
                   );
                 })()}
 
-                <div>
-                  <label className="block text-sm font-medium text-slate-600 mb-2">
-                    Choose date & time
-                  </label>
-                  <input
-                    type="datetime-local"
-                    min={localMinDateTime()}
-                    value={scheduledDate}
-                    onChange={(e) => setScheduledDate(e.target.value)}
-                    className="w-full px-4 py-3 border border-slate-200 rounded-xl focus:ring-2 focus:ring-sky-400"
-                  />
-                </div>
+              <div>
+                <label className="block text-sm font-medium text-slate-600 mb-2">
+                  Choose date & time
+                </label>
+                <input
+                  type="datetime-local"
+                  min={localMinDateTime()}
+                  value={scheduledDate}
+                  onChange={(e) => setScheduledDate(e.target.value)}
+                  className="w-full px-4 py-3 border border-slate-200 rounded-xl focus:ring-2 focus:ring-sky-400"
+                />
+              </div>
 
               <button
                 onClick={handleBooking}

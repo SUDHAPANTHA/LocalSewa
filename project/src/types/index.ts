@@ -69,6 +69,7 @@ export interface Service {
   bookingCount?: number;
   tags?: string[];
   isCore?: boolean;
+  isApproved?: boolean | null;
   isHardcoded?: boolean;
   systemRank?: number | null;
   recommendationScore?: number;

@@ -1,130 +1,53 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Layout } from "../../components/Layout";
 import { adminApi } from "../../api/admin";
 import { Service } from "../../types";
 import { useToast } from "../../components/Toast";
-import { Modal } from "../../components/Modal";
-import { Edit, Trash2, User, Search, Star, Tag } from "lucide-react";
+import { CheckCircle, XCircle, User, Search, Star, Tag, Clock } from "lucide-react";
 import { getApiErrorMessage } from "../../utils/errors";
+
+type ServiceFilter = "all" | "pending" | "approved" | "rejected";
 
 export function AdminServices() {
   const [services, setServices] = useState<Service[]>([]);
-  const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
-  const [selectedService, setSelectedService] = useState<Service | null>(null);
-  const [formData, setFormData] = useState({
-    name: "",
-    description: "",
-    price: "",
-    emojiIcon: "🛠️",
-    category: "",
-    rating: "",
-    tags: "",
-  });
-  const [fetchError, setFetchError] = useState<string | null>(null);
+  const [filter, setFilter] = useState<ServiceFilter>("all");
   const { showToast, ToastComponent } = useToast();
 
-  // refs to control fetch frequency / concurrency
-  const isMounted = useRef(true);
-  const inflight = useRef<AbortController | null>(null);
-  const lastFetchAt = useRef<number | null>(null);
-  const MIN_FETCH_INTERVAL_MS = 700; // throttle window
-
-  useEffect(() => {
-    isMounted.current = true;
-    return () => {
-      isMounted.current = false;
-      if (inflight.current) {
-        inflight.current.abort();
-        inflight.current = null;
-      }
-    };
-  }, []);
-
-  // centralized fetch (abort + throttle + logging)
-  const refetchServices = async (reason: string = "manual") => {
-    const now = Date.now();
-    if (
-      lastFetchAt.current &&
-      now - lastFetchAt.current < MIN_FETCH_INTERVAL_MS
-    ) {
-      console.debug(
-        `[AdminServices] Skipping fetch (throttled). reason=${reason} elapsed=${
-          now - lastFetchAt.current
-        }ms`
-      );
-      return;
+  // Fetch services
+  const fetchServices = async () => {
+    try {
+      const response = await adminApi.getAllServices();
+      const servicesList = response?.data?.services || [];
+      setServices(servicesList);
+    } catch (error: any) {
+      console.error("[AdminServices] Error:", error);
+      showToast("Failed to load services", "error");
+      setServices([]);
     }
-    if (inflight.current) {
-      console.debug(
-        "[AdminServices] Skipping fetch (already in-flight). reason=",
-        reason
-      );
-      return;
-    }
-
-    console.debug(`[AdminServices] Fetching services — reason=${reason}`);
-    lastFetchAt.current = now;
-
-    const controller = new AbortController();
-    inflight.current = controller;
-
-    if (isMounted.current) setLoading(true);
-    if (isMounted.current) setFetchError(null);
-
-    const executeFetch = async (attempt = 0): Promise<void> => {
-      try {
-        const resp = await adminApi.getAllServices({
-          signal: controller.signal,
-        });
-        if (!isMounted.current || controller.signal.aborted) return;
-        setServices(resp.data.services || []);
-        console.debug(
-          "[AdminServices] Fetched",
-          (resp.data.services || []).length,
-          "services"
-        );
-      } catch (err: any) {
-        if (err?.name === "AbortError" || controller.signal.aborted) {
-          console.debug("[AdminServices] Fetch aborted");
-          return;
-        }
-        if (attempt < 1) {
-          await new Promise((resolve) => setTimeout(resolve, 250));
-          return executeFetch(attempt + 1);
-        }
-        const friendly = getApiErrorMessage(
-          err,
-          "Unable to load services. Please verify your connection and retry."
-        );
-        if (isMounted.current) {
-          setFetchError(friendly);
-          showToast(friendly, "error");
-          setServices([]);
-        }
-      } finally {
-        if (isMounted.current) {
-          inflight.current = null;
-          setLoading(false);
-        }
-      }
-    };
-
-    await executeFetch();
   };
 
-  // run once on mount
   useEffect(() => {
-    refetchServices("mount").catch((e) =>
-      console.error("refetchServices mount error:", e)
-    );
+    fetchServices();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const filteredServices = useMemo(() => {
-    if (!search.trim()) return services;
+    let filtered = services;
+    
+    // Apply status filter
+    if (filter === "pending") {
+      filtered = filtered.filter((s) => s.isApproved === undefined || s.isApproved === null);
+    } else if (filter === "approved") {
+      filtered = filtered.filter((s) => s.isApproved === true);
+    } else if (filter === "rejected") {
+      filtered = filtered.filter((s) => s.isApproved === false);
+    }
+    
+    // Apply search filter
+    if (!search.trim()) return filtered;
     const term = search.toLowerCase();
-    return services.filter((service) => {
+    return filtered.filter((service) => {
       const providerName =
         typeof service.provider === "object"
           ? service.provider?.name?.toLowerCase()
@@ -135,69 +58,24 @@ export function AdminServices() {
         providerName?.includes(term)
       );
     });
-  }, [search, services]);
+  }, [search, services, filter]);
 
-  const openEditModal = (service: Service) => {
-    setSelectedService(service);
-    setFormData({
-      name: service.name ?? "",
-      description: service.description ?? "",
-      price: (service.price ?? "").toString(),
-      emojiIcon: service.emojiIcon || "🛠️",
-      category: service.category || "",
-      rating: service.rating?.toString() || "",
-      tags: service.tags?.join(", ") || "",
-    });
-  };
-
-  const handleUpdateService = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!selectedService) return;
-
-    const payload: Partial<Service & { tags?: string[]; price?: number }> = {
-      name: formData.name.trim(),
-      description: formData.description.trim(),
-      price: Number(formData.price),
-      emojiIcon: formData.emojiIcon || "🛠️",
-      category: formData.category || selectedService.category,
-      rating: formData.rating ? Number(formData.rating) : undefined,
-      tags: formData.tags
-        .split(",")
-        .map((t) => t.trim())
-        .filter((t) => t.length > 0),
-    };
-
-    if (!payload.name || !payload.description || Number.isNaN(payload.price)) {
-      showToast("Provide valid service details", "error");
+  const handleApproveService = async (serviceId: string, status: "approved" | "rejected") => {
+    if (!serviceId) {
+      showToast("Service ID missing", "error");
       return;
     }
-
+    
     try {
-      await adminApi.updateService(selectedService._id, payload);
-      showToast("Service updated successfully", "success");
-      setSelectedService(null);
-
-      // refresh list (use refetchServices to be defensive)
-      refetchServices("after-update").catch((err) =>
-        console.error("refetch after update failed:", err)
+      await adminApi.approveService(serviceId, { isApproved: status === "approved" });
+      showToast(
+        `Service ${status === "approved" ? "approved" : "rejected"} successfully`,
+        "success"
       );
+      fetchServices();
     } catch (error) {
-      console.error("Update service failed:", error);
-      showToast(getApiErrorMessage(error, "Failed to update service"), "error");
-    }
-  };
-
-  const handleDeleteService = async (serviceId: string) => {
-    if (!confirm("Delete this service? This cannot be undone.")) return;
-    try {
-      await adminApi.deleteService(serviceId);
-      showToast("Service deleted successfully", "success");
-      // update local list immediately to avoid refetch storms
-      if (isMounted.current)
-        setServices((prev) => prev.filter((s) => s._id !== serviceId));
-    } catch (error) {
-      console.error("Delete service failed:", error);
-      showToast(getApiErrorMessage(error, "Failed to delete service"), "error");
+      console.error("Approve service failed:", error);
+      showToast(getApiErrorMessage(error, "Failed to update service status"), "error");
     }
   };
 
@@ -205,16 +83,11 @@ export function AdminServices() {
     <Layout>
       {ToastComponent}
       <div className="max-w-6xl mx-auto animate-fade-in">
-        {fetchError && (
-          <div className="mb-4 rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">
-            {fetchError}
-          </div>
-        )}
         <div className="flex flex-col gap-4 mb-8 sm:flex-row sm:items-center sm:justify-between">
           <div>
-            <h1 className="text-4xl font-bold text-gray-900">View Services</h1>
+            <h1 className="text-4xl font-bold text-gray-900">Manage Services</h1>
             <p className="text-gray-600">
-              Audit, edit, or remove vendor services
+              Edit, delete, approve or reject vendor services
             </p>
           </div>
           <div className="relative w-full sm:w-80 flex items-center gap-3">
@@ -226,23 +99,35 @@ export function AdminServices() {
               placeholder="Search services or providers"
               className="w-full pl-9 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
             />
-            <button
-              onClick={() =>
-                refetchServices("manual-button").catch((e) => console.error(e))
-              }
-              className="ml-2 px-3 py-2 rounded-lg border bg-white text-gray-700 hover:bg-gray-50"
-              title="Refresh services"
-            >
-              Refresh
-            </button>
           </div>
         </div>
 
-        {loading ? (
-          <p className="text-gray-600">Loading services...</p>
-        ) : filteredServices.length === 0 ? (
+        <div className="flex gap-3 mb-6">
+          {(["all", "pending", "approved", "rejected"] as ServiceFilter[]).map((f) => (
+            <button
+              key={f}
+              onClick={() => setFilter(f)}
+              className={`px-6 py-2 rounded-lg font-medium transition ${
+                filter === f
+                  ? "bg-blue-600 text-white"
+                  : "bg-white text-gray-700 hover:bg-gray-100"
+              }`}
+            >
+              {f.charAt(0).toUpperCase() + f.slice(1)}
+            </button>
+          ))}
+        </div>
+
+        {filteredServices.length === 0 ? (
           <div className="bg-white rounded-xl shadow-lg p-12 text-center">
-            <SparklesPlaceholder />
+            <h3 className="text-xl font-bold text-gray-800 mb-2">
+              No services found
+            </h3>
+            <p className="text-gray-600">
+              {services.length === 0 
+                ? "No services in database yet" 
+                : "No services match the selected filter"}
+            </p>
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -301,162 +186,47 @@ export function AdminServices() {
                     ))}
                   </div>
                 )}
-                <div className="flex gap-2">
-                  <button
-                    onClick={() => openEditModal(service)}
-                    className="flex-1 inline-flex items-center justify-center gap-2 px-4 py-2 border border-blue-200 text-blue-600 rounded-lg hover:bg-blue-50 transition font-medium"
-                  >
-                    <Edit className="w-4 h-4" />
-                    Edit
-                  </button>
-                  <button
-                    onClick={() => handleDeleteService(service._id)}
-                    className="flex-1 inline-flex items-center justify-center gap-2 px-4 py-2 border border-red-200 text-red-600 rounded-lg hover:bg-red-50 transition font-medium"
-                  >
-                    <Trash2 className="w-4 h-4" />
-                    Delete
-                  </button>
+                <div className="flex items-center justify-between mt-4 pt-4 border-t border-gray-200">
+                  {service.isApproved === true ? (
+                    <span className="flex items-center gap-1 px-4 py-2 bg-green-100 text-green-700 rounded-full font-medium">
+                      <CheckCircle className="w-5 h-5" />
+                      Approved
+                    </span>
+                  ) : service.isApproved === false ? (
+                    <span className="flex items-center gap-1 px-4 py-2 bg-red-100 text-red-700 rounded-full font-medium">
+                      <XCircle className="w-5 h-5" />
+                      Rejected
+                    </span>
+                  ) : (
+                    <>
+                      <span className="flex items-center gap-1 px-4 py-2 bg-yellow-100 text-yellow-700 rounded-full font-medium">
+                        <Clock className="w-5 h-5" />
+                        Pending Review
+                      </span>
+                      <div className="flex gap-2">
+                        <button
+                          onClick={() => handleApproveService(service._id, "approved")}
+                          className="flex items-center gap-1 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition font-medium"
+                        >
+                          <CheckCircle className="w-4 h-4" />
+                          Approve
+                        </button>
+                        <button
+                          onClick={() => handleApproveService(service._id, "rejected")}
+                          className="flex items-center gap-1 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition font-medium"
+                        >
+                          <XCircle className="w-4 h-4" />
+                          Reject
+                        </button>
+                      </div>
+                    </>
+                  )}
                 </div>
               </div>
             ))}
           </div>
         )}
       </div>
-
-      <Modal
-        isOpen={!!selectedService}
-        onClose={() => {
-          setSelectedService(null);
-        }}
-        title="Edit Service"
-      >
-        {selectedService && (
-          <form onSubmit={handleUpdateService} className="space-y-5">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Service Name
-              </label>
-              <input
-                type="text"
-                value={formData.name}
-                onChange={(e) =>
-                  setFormData({ ...formData, name: e.target.value })
-                }
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                required
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Description
-              </label>
-              <textarea
-                value={formData.description}
-                onChange={(e) =>
-                  setFormData({ ...formData, description: e.target.value })
-                }
-                rows={3}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                required
-              />
-            </div>
-            <div className="grid grid-cols-2 gap-3">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Price (NPR)
-                </label>
-                <input
-                  type="number"
-                  value={formData.price}
-                  min="0"
-                  step="0.01"
-                  onChange={(e) =>
-                    setFormData({ ...formData, price: e.target.value })
-                  }
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  required
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Emoji Icon
-                </label>
-                <input
-                  type="text"
-                  maxLength={4}
-                  value={formData.emojiIcon}
-                  onChange={(e) =>
-                    setFormData({ ...formData, emojiIcon: e.target.value })
-                  }
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-2xl"
-                  required
-                />
-              </div>
-            </div>
-            <div className="grid grid-cols-2 gap-3">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Category
-                </label>
-                <input
-                  type="text"
-                  value={formData.category}
-                  onChange={(e) =>
-                    setFormData({ ...formData, category: e.target.value })
-                  }
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  required
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Rating
-                </label>
-                <input
-                  type="number"
-                  min="1"
-                  max="5"
-                  step="0.1"
-                  value={formData.rating}
-                  onChange={(e) =>
-                    setFormData({ ...formData, rating: e.target.value })
-                  }
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                />
-              </div>
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Tags (comma separated)
-              </label>
-              <input
-                type="text"
-                value={formData.tags}
-                onChange={(e) =>
-                  setFormData({ ...formData, tags: e.target.value })
-                }
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              />
-            </div>
-            <button
-              type="submit"
-              className="w-full py-3 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 transition"
-            >
-              Save Changes
-            </button>
-          </form>
-        )}
-      </Modal>
     </Layout>
-  );
-}
-
-function SparklesPlaceholder() {
-  return (
-    <div className="flex flex-col items-center gap-4 text-gray-500">
-      <span className="text-5xl">✨</span>
-      <h3 className="text-xl font-bold text-gray-800">No services found</h3>
-      <p>Try adjusting your search filters</p>
-    </div>
   );
 }

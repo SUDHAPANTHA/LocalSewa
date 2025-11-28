@@ -15,6 +15,7 @@
     "axios": "^1.13.2",
     "caniuse-lite": "^1.0.30001755",
     "date-fns": "^4.1.0",
+    "framer-motion": "^12.23.24",
     "leaflet": "^1.9.4",
     "lucide-react": "^0.344.0",
     "react": "^18.3.1",

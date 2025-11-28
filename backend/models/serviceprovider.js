@@ -48,6 +48,7 @@ const serviceSchema = new Schema(
     },
     provider: { type: Schema.Types.ObjectId, ref: "ServiceProvider" },
     isCore: { type: Boolean, default: false },
+    isApproved: { type: Boolean, default: null },
     systemRank: { type: Number, default: null },
     coreSlug: { type: String, unique: true, sparse: true },
     rating: { type: Number, default: 4.7, min: 1, max: 5 },

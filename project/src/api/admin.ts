@@ -55,6 +55,17 @@ export const adminApi = {
     api.delete<{ msg: string }>(`/admin/service/${serviceId}`, {
       signal: config?.signal,
     }),
+
+  approveService: (
+    serviceId: string,
+    payload: { isApproved: boolean },
+    config?: RequestConfig
+  ) =>
+    api.patch<{ msg: string; service: Service }>(
+      `/admin/service-approve/${serviceId}`,
+      payload,
+      { signal: config?.signal }
+    ),
 };
 
 export default adminApi;

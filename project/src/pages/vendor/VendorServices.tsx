@@ -45,6 +45,7 @@ export function VendorServices() {
     description: "",
     price: "",
     category: "handyman",
+    location: "",
   });
 
   // Fetch services
@@ -74,6 +75,7 @@ export function VendorServices() {
       description: "",
       price: "",
       category: "handyman",
+      location: "",
     });
   };
 
@@ -168,6 +170,7 @@ export function VendorServices() {
       description: service.description,
       price: String(service.price ?? ""),
       category: service.category || "handyman",
+      location: "", // Services don't have location field yet, so empty for now
     });
     setIsEditModalOpen(true);
   };
@@ -277,11 +280,13 @@ export function VendorServices() {
                         </div>
                       </td>
                       <td className="px-6 py-4">
-                        {service.provider &&
-                        typeof service.provider === "object" &&
-                        service.provider.isApproved ? (
+                        {service.isApproved === true ? (
                           <span className="px-3 py-1 bg-green-100 text-green-700 rounded-full text-sm font-medium">
                             Approved
+                          </span>
+                        ) : service.isApproved === false ? (
+                          <span className="px-3 py-1 bg-red-100 text-red-700 rounded-full text-sm font-medium">
+                            Rejected
                           </span>
                         ) : (
                           <span className="px-3 py-1 bg-amber-100 text-amber-700 rounded-full text-sm font-medium">
@@ -412,11 +417,13 @@ export function VendorServices() {
                 <label className="block text-sm font-medium text-slate-600 mb-1">
                   Status
                 </label>
-                {selectedService.provider &&
-                typeof selectedService.provider === "object" &&
-                selectedService.provider.isApproved ? (
+                {selectedService.isApproved === true ? (
                   <span className="px-3 py-1 bg-green-100 text-green-700 rounded-full text-sm font-medium">
                     Approved - Visible to users
+                  </span>
+                ) : selectedService.isApproved === false ? (
+                  <span className="px-3 py-1 bg-red-100 text-red-700 rounded-full text-sm font-medium">
+                    Rejected by admin
                   </span>
                 ) : (
                   <span className="px-3 py-1 bg-amber-100 text-amber-700 rounded-full text-sm font-medium">
@@ -465,6 +472,7 @@ function ServiceForm({
     description: string;
     price: string;
     category: string;
+    location: string;
   };
   setFormData: React.Dispatch<
     React.SetStateAction<{
@@ -472,6 +480,7 @@ function ServiceForm({
       description: string;
       price: string;
       category: string;
+      location: string;
     }>
   >;
   onSubmit: (e: React.FormEvent) => void;
@@ -514,6 +523,26 @@ function ServiceForm({
         />
         <p className="text-xs text-slate-500 mt-1">
           Please describe your service using text only. Do not include emojis or icons.
+        </p>
+      </div>
+
+      <div>
+        <label className="block text-sm font-medium text-slate-600 mb-2">
+          Service Location / Area
+        </label>
+        <input
+          type="text"
+          value={formData.location}
+          onChange={(e) =>
+            setFormData((prev) => ({ ...prev, location: e.target.value }))
+          }
+          className="w-full px-4 py-3 border border-slate-200 rounded-xl focus:ring-2 focus:ring-slate-900 focus:outline-none"
+          placeholder="e.g., Kathmandu, Lalitpur, Bhaktapur"
+          required
+          disabled={disabled}
+        />
+        <p className="text-xs text-slate-500 mt-1">
+          Enter the area(s) where you provide this service
         </p>
       </div>
 

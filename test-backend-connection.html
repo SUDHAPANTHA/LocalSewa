@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Test Backend Connection</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 20px;
+        }
+        button {
+            padding: 10px 20px;
+            margin: 10px;
+            font-size: 16px;
+            cursor: pointer;
+        }
+        .success { color: green; }
+        .error { color: red; }
+        pre {
+            background: #f4f4f4;
+            padding: 15px;
+            border-radius: 5px;
+            overflow-x: auto;
+        }
+    </style>
+</head>
+<body>
+    <h1>Backend Connection Test</h1>
+    
+    <div>
+        <button onclick="testBackend()">Test Backend Connection</button>
+        <button onclick="testAdminServices()">Test Admin Services API</button>
+    </div>
+    
+    <div id="result"></div>
+
+    <script>
+        const API_BASE = 'http://localhost:5000';
+        
+        function showResult(html) {
+            document.getElementById('result').innerHTML = html;
+        }
+        
+        async function testBackend() {
+            showResult('<p>Testing backend connection...</p>');
+            
+            try {
+                const response = await fetch(API_BASE + '/admin/services');
+                const data = await response.json();
+                
+                if (response.ok) {
+                    showResult(`
+                        <h2 class="success">✅ Backend Connected!</h2>
+                        <p>Status: ${response.status}</p>
+                        <p>Services found: ${data.services?.length || 0}</p>
+                        <h3>Response:</h3>
+                        <pre>${JSON.stringify(data, null, 2)}</pre>
+                    `);
+                } else {
+                    showResult(`
+                        <h2 class="error">❌ Backend Error</h2>
+                        <p>Status: ${response.status}</p>
+                        <pre>${JSON.stringify(data, null, 2)}</pre>
+                    `);
+                }
+            } catch (error) {
+                showResult(`
+                    <h2 class="error">❌ Connection Failed</h2>
+                    <p>Error: ${error.message}</p>
+                    <p>Make sure backend is running on port 5000:</p>
+                    <pre>cd backend
+npm start</pre>
+                `);
+            }
+        }
+        
+        async function testAdminServices() {
+            showResult('<p>Testing admin services API...</p>');
+            
+            try {
+                const response = await fetch(API_BASE + '/admin/services', {
+                    method: 'GET',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    }
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok) {
+                    const services = data.services || [];
+                    showResult(`
+                        <h2 class="success">✅ API Working!</h2>
+                        <p>Total services: ${services.length}</p>
+                        ${services.length === 0 ? 
+                            '<p class="error">⚠️ No services in database. Create a service as vendor first.</p>' : 
+                            '<h3>Services:</h3>'
+                        }
+                        <pre>${JSON.stringify(data, null, 2)}</pre>
+                    `);
+                } else {
+                    showResult(`
+                        <h2 class="error">❌ API Error</h2>
+                        <p>Status: ${response.status}</p>
+                        <pre>${JSON.stringify(data, null, 2)}</pre>
+                    `);
+                }
+            } catch (error) {
+                showResult(`
+                    <h2 class="error">❌ Request Failed</h2>
+                    <p>Error: ${error.message}</p>
+                    <p><strong>Common causes:</strong></p>
+                    <ul>
+                        <li>Backend not running (start with: cd backend && npm start)</li>
+                        <li>Wrong port (should be 5000)</li>
+                        <li>CORS not configured</li>
+                    </ul>
+                `);
+            }
+        }
+        
+        // Auto-test on load
+        window.onload = () => {
+            testBackend();
+        };
+    </script>
+</body>
+</html>

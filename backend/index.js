@@ -1447,6 +1447,38 @@ app.delete("/admin/service/:id", async (req, res) => {
   }
 });
 
+app.patch("/admin/service-approve/:id", async (req, res) => {
+  try {
+    const { isApproved } = req.body;
+    
+    if (typeof isApproved !== "boolean") {
+      return res.status(400).json({ msg: "isApproved must be a boolean" });
+    }
+
+    const service = await Service.findByIdAndUpdate(
+      req.params.id,
+      { isApproved },
+      { new: true }
+    ).populate("provider", "name email phone isApproved");
+
+    if (!service) {
+      return res.status(404).json({ msg: "Service not found" });
+    }
+
+    emitServiceEvent("service-approval-updated", { 
+      service: asPlainService(service),
+      isApproved 
+    });
+
+    res.json({ 
+      msg: `Service ${isApproved ? "approved" : "rejected"}`, 
+      service 
+    });
+  } catch (err) {
+    res.status(500).json({ msg: err.message });
+  }
+});
+
 app.get("/admin/complaints", async (req, res) => {
   try {
     const { status, priority } = req.query;
@@ -1776,6 +1808,7 @@ app.post("/provider-add-service/:id", async (req, res) => {
       emojiIcon: sanitizeEmojiSymbol(emojiIcon),
       category: category.toLowerCase(),
       provider: providerId,
+      isApproved: null, // Pending admin approval
       rating: rating ? Math.min(5, Math.max(1, Number(rating))) : undefined,
       tags: normalizeTags(tags),
       areaTags: mergedAreaTags,
@@ -2452,6 +2485,10 @@ app.get("/services", async (req, res) => {
       .lean();
 
     const filtered = services.filter((svc) => {
+      // Only show approved services or core services
+      const serviceApproved = svc.isCore || svc.isApproved === true;
+      if (!serviceApproved) return false;
+      
       const providerApproved = svc.isCore || svc.provider?.isApproved;
       if (!providerApproved) return false;
       if (requireCvQualified) {
