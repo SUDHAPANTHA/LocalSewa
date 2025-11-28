@@ -193,7 +193,7 @@ export function AdminDashboard() {
           </div>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-5 gap-6">
           <a
             href="#/admin/providers"
             className="group bg-white border-2 border-black rounded-2xl shadow-lg p-8 hover:bg-black hover:text-white transition-all duration-300 transform hover:-translate-y-1 no-underline"
@@ -255,6 +255,21 @@ export function AdminDashboard() {
             </h3>
             <p className="text-gray-600 group-hover:text-gray-300 transition-colors duration-300 text-sm">
               Audit vendor services
+            </p>
+          </a>
+
+          <a
+            href="#/admin/complaints"
+            className="group bg-white border-2 border-black rounded-2xl shadow-lg p-8 hover:bg-black hover:text-white transition-all duration-300 transform hover:-translate-y-1 no-underline"
+          >
+            <div className="w-14 h-14 bg-purple-100 group-hover:bg-purple-600 rounded-2xl flex items-center justify-center mb-4 transition-all duration-300">
+              <Shield className="w-8 h-8 text-purple-600 group-hover:text-white transition-colors duration-300" />
+            </div>
+            <h3 className="text-xl font-black mb-2 group-hover:text-white transition-colors duration-300">
+              Complaints
+            </h3>
+            <p className="text-gray-600 group-hover:text-gray-300 transition-colors duration-300 text-sm">
+              Manage complaints
             </p>
           </a>
         </div>

@@ -396,6 +396,7 @@ const CV_RISK_PATTERNS = [
 const DEFAULT_NEAREST_RADIUS_KM = 35;
 
 const SAMPLE_PROVIDER_SEED = [
+  // Existing providers
   {
     name: "Ram Shrestha",
     email: "ram.elec01@gmail.com",
@@ -416,8 +417,7 @@ const SAMPLE_PROVIDER_SEED = [
     price: 1500,
     emoji: "🚰",
     area: "baneshwor",
-    description:
-      "Certified plumber for leaks, bathroom fixes and kitchen repairs.",
+    description: "Certified plumber for leaks, bathroom fixes and kitchen repairs.",
   },
   {
     name: "Raj Tamang",
@@ -439,8 +439,7 @@ const SAMPLE_PROVIDER_SEED = [
     price: 1300,
     emoji: "🧼",
     area: "boudha",
-    description:
-      "Deep cleaning for apartments, clinics and studios across Bouddha.",
+    description: "Deep cleaning for apartments, clinics and studios across Bouddha.",
   },
   {
     name: "Bishal Thapa",
@@ -452,6 +451,62 @@ const SAMPLE_PROVIDER_SEED = [
     emoji: "❄️",
     area: "chabahil",
     description: "Split/VRF AC installation, servicing and emergency repair.",
+  },
+  // Additional providers for all areas
+  {
+    name: "Tinkune Services",
+    email: "tinkune.plumb@gmail.com",
+    password: "Tinkune@123",
+    serviceName: "Home Plumbing Service",
+    category: "plumbing",
+    price: 1500,
+    emoji: "🔧",
+    area: "tinkune",
+    description: "Professional plumbing repairs and installations",
+  },
+  {
+    name: "Maitighar Services",
+    email: "maitighar.laundry@gmail.com",
+    password: "Maitighar@123",
+    serviceName: "Laundry Service",
+    category: "cleaning",
+    price: 800,
+    emoji: "👕",
+    area: "maitighar",
+    description: "Professional laundry and dry cleaning",
+  },
+  {
+    name: "Sinamangal Services",
+    email: "sinamangal.airport@gmail.com",
+    password: "Sinamangal@123",
+    serviceName: "Airport Transfer",
+    category: "moving",
+    price: 1000,
+    emoji: "✈️",
+    area: "sinamangal",
+    description: "Reliable airport pickup and drop services",
+  },
+  {
+    name: "Gaushala Services",
+    email: "gaushala.pet@gmail.com",
+    password: "Gaushala@123",
+    serviceName: "Pet Grooming",
+    category: "wellness",
+    price: 1200,
+    emoji: "🐕",
+    area: "gaushala",
+    description: "Professional pet grooming and care",
+  },
+  {
+    name: "Putalisadak Services",
+    email: "putalisadak.computer@gmail.com",
+    password: "Putalisadak@123",
+    serviceName: "Computer Repair",
+    category: "appliance",
+    price: 1500,
+    emoji: "💻",
+    area: "putalisadak",
+    description: "Computer and laptop repair services",
   },
 ];
 
@@ -1967,13 +2022,18 @@ app.post("/create-booking", async (req, res) => {
     const svc = await Service.findById(service);
     if (!svc) return res.status(404).json({ msg: "Service not found" });
 
-    const prov = await ServiceProvider.findById(provider);
-    if (!prov) return res.status(404).json({ msg: "Provider not found" });
+    // Skip provider validation for demo providers (IDs starting with "demo-")
+    const isDemoProvider = provider.toString().startsWith("demo-");
+    
+    if (!isDemoProvider) {
+      const prov = await ServiceProvider.findById(provider);
+      if (!prov) return res.status(404).json({ msg: "Provider not found" });
 
-    if (!prov.isApproved) {
-      return res
-        .status(400)
-        .json({ msg: "Provider is not approved. Service not available." });
+      if (!prov.isApproved) {
+        return res
+          .status(400)
+          .json({ msg: "Provider is not approved. Service not available." });
+      }
     }
 
     const confirmationCode = generateConfirmationCode();
@@ -2002,6 +2062,55 @@ app.post("/create-booking", async (req, res) => {
           lng: resolvedArea.coordinates.lng,
         }
       : null;
+
+    // Check for duplicate booking (user already has active booking with this provider)
+    // Skip duplicate check for demo providers to allow testing
+    const activeBooking = !isDemoProvider ? await BookingModel.findOne({
+      user,
+      provider,
+      status: { $in: [BOOKING_STATUS.PENDING, BOOKING_STATUS.CONFIRMED, BOOKING_STATUS.SCHEDULED] },
+    }) : null;
+    
+    if (activeBooking) {
+      // User already has an active booking with this provider
+      const suggestions = await findNearestAlternatives({
+        category: svc.category,
+        excludeProviderId: provider,
+        bookingDate,
+        bookingTime,
+        originAreaSlug: resolvedArea?.slug,
+        originCoordinates: originCoords,
+        limit: 5,
+      });
+      
+      return res.status(409).json({
+        error: "DUPLICATE_BOOKING",
+        message: "You already have an active booking with this provider",
+        existingBooking: {
+          id: activeBooking._id,
+          status: activeBooking.status,
+          bookingDate: activeBooking.bookingDate,
+          bookingTime: activeBooking.bookingTime,
+          confirmationCode: activeBooking.confirmationCode,
+        },
+        alternatives: suggestions.map((alt) => ({
+          provider: {
+            id: alt.provider._id,
+            name: alt.provider.name,
+            avatarEmoji: alt.provider.avatarEmoji,
+            experienceYears: alt.provider.experienceYears,
+          },
+          service: {
+            id: alt.service._id,
+            name: alt.service.name,
+            price: alt.service.price,
+            currency: alt.service.currency,
+            category: alt.service.category,
+          },
+          distanceKm: alt.distanceKm,
+        })),
+      });
+    }
 
     const existingSlot = await BookingModel.findOne({
       provider,
@@ -2870,6 +2979,135 @@ app.get("/services/search/smart", async (req, res) => {
     res
       .status(500)
       .json({ msg: "Failed to run smart search", error: err.message });
+  }
+});
+
+// Provider recommendations endpoint with booking filter
+app.get("/recommendations", async (req, res) => {
+  try {
+    const { serviceCategory, userLocation, hideBooked, limit, userId } = req.query;
+    
+    // Parse user location
+    let parsedLocation = null;
+    if (userLocation) {
+      if (userLocation.includes(",")) {
+        const [lat, lng] = userLocation.split(",").map(Number);
+        if (!isNaN(lat) && !isNaN(lng)) {
+          parsedLocation = {
+            coordinates: [lng, lat], // GeoJSON format
+          };
+        }
+      } else {
+        // Area slug
+        parsedLocation = {
+          customerAreaSlug: userLocation.toLowerCase(),
+        };
+      }
+    }
+    
+    // Get user's active bookings if userId provided
+    const bookedProviderIds = new Set();
+    if (userId) {
+      const activeBookings = await BookingModel.find({
+        user: userId,
+        status: { $in: [BOOKING_STATUS.PENDING, BOOKING_STATUS.CONFIRMED, BOOKING_STATUS.SCHEDULED] },
+      }).select("provider").lean();
+      
+      activeBookings.forEach(booking => {
+        bookedProviderIds.add(booking.provider.toString());
+      });
+    }
+    
+    // Build service query
+    const serviceQuery = {};
+    if (serviceCategory) {
+      serviceQuery.category = serviceCategory.toLowerCase();
+    }
+    
+    // Find services
+    const services = await Service.find(serviceQuery)
+      .populate("provider")
+      .lean();
+    
+    // Build recommendations
+    const recommendations = [];
+    const seenProviders = new Set();
+    
+    for (const service of services) {
+      if (!service.provider) continue;
+      
+      const providerId = service.provider._id.toString();
+      
+      // Skip if already processed
+      if (seenProviders.has(providerId)) continue;
+      seenProviders.add(providerId);
+      
+      const isBooked = bookedProviderIds.has(providerId);
+      
+      // Skip booked providers if hideBooked is true
+      if (hideBooked === "true" && isBooked) continue;
+      
+      // Calculate distance if location provided
+      let distanceKm = null;
+      if (parsedLocation) {
+        const userCoords = parsedLocation.coordinates;
+        const providerCoords = service.provider.location?.coordinates;
+        
+        if (userCoords && providerCoords && userCoords.length === 2 && providerCoords.length === 2) {
+          distanceKm = haversineDistance(
+            userCoords[1], // lat
+            userCoords[0], // lng
+            providerCoords[1], // lat
+            providerCoords[0] // lng
+          );
+          distanceKm = Number(distanceKm.toFixed(2));
+        }
+      }
+      
+      recommendations.push({
+        provider: {
+          id: service.provider._id,
+          name: service.provider.name,
+          avatarEmoji: service.provider.avatarEmoji,
+          experienceYears: service.provider.experienceYears,
+          primaryAreaSlug: service.provider.primaryAreaSlug,
+          primaryAreaName: service.provider.primaryAreaName,
+        },
+        service: {
+          id: service._id,
+          name: service.name,
+          description: service.description,
+          price: service.price,
+          currency: service.currency,
+          category: service.category,
+          emojiIcon: service.emojiIcon,
+        },
+        distanceKm,
+        isBooked,
+      });
+    }
+    
+    // Sort by distance if available
+    if (parsedLocation) {
+      recommendations.sort((a, b) => {
+        if (a.distanceKm === null && b.distanceKm === null) return 0;
+        if (a.distanceKm === null) return 1;
+        if (b.distanceKm === null) return -1;
+        return a.distanceKm - b.distanceKm;
+      });
+    }
+    
+    // Apply limit
+    const resultLimit = limit ? parseInt(limit) : 10;
+    const limitedResults = recommendations.slice(0, resultLimit);
+    
+    res.json({
+      providers: limitedResults,
+      total: limitedResults.length,
+    });
+  } catch (err) {
+    console.error("Recommendations error:", err);
+    res.status(500).json({ msg: err.message });
   }
 });
 

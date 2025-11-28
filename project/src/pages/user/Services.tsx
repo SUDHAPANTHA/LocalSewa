@@ -20,10 +20,12 @@ import {
 import { LocalityAutocomplete } from "../../components/LocalityAutocomplete";
 import { HARDCODED_SERVICES } from "../../data/hardcodedServices";
 
-// Hardcoded services now imported from separate file
+// Hardcoded services now imported from separate file: hardcodedServices.ts
 // Total: 31 services covering all Kathmandu areas
+// Old array below is kept for reference but not used
 
-const OLD_HARDCODED_SERVICES_BELOW_WILL_BE_REMOVED = [
+/* OLD ARRAY - NOT USED ANYMORE
+const OLD_HARDCODED_SERVICES = [
   {
     _id: "hc1",
     name: "Home Plumbing Service",
@@ -355,6 +357,7 @@ const OLD_HARDCODED_SERVICES_BELOW_WILL_BE_REMOVED = [
     },
   },
 ];
+*/ // End of old unused array
 
 const localMinDateTime = () => {
   const now = new Date();
@@ -376,13 +379,61 @@ export function Services() {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedLocality, setSelectedLocality] = useState("");
   const [selectedArea, setSelectedArea] = useState<KathmanduArea | null>(null);
-  const [localityServices, setLocalityServices] = useState<any[]>([]);
-  const [nearbyServices, setNearbyServices] = useState<any[]>([]);
-  const [showingNearby, setShowingNearby] = useState(false);
   const [loading, setLoading] = useState(true);
   const [selectedService, setSelectedService] = useState<Service | null>(null);
   const [scheduledDate, setScheduledDate] = useState("");
   const [bookingLoading, setBookingLoading] = useState(false);
+  const [userBookedProviderIds, setUserBookedProviderIds] = useState<Set<string>>(new Set());
+  const [duplicateError, setDuplicateError] = useState<any>(null);
+  const [showAlternatives, setShowAlternatives] = useState(false);
+  const [hideBookedProviders, setHideBookedProviders] = useState(false);
+  const [allAreas, setAllAreas] = useState<KathmanduArea[]>([]);
+
+  // Fetch all Kathmandu areas for distance calculation
+  useEffect(() => {
+    const fetchAreas = async () => {
+      try {
+        const response = await areasApi.getAll();
+        setAllAreas(response.data.areas || []);
+      } catch (error) {
+        console.error("Failed to fetch areas", error);
+      }
+    };
+    
+    fetchAreas();
+  }, []);
+
+  // Fetch user's active bookings to check which providers are already booked
+  useEffect(() => {
+    if (!user?.id) return;
+    
+    const fetchUserBookings = async () => {
+      try {
+        const response = await bookingsApi.getUserBookings(user.id);
+        const responseData = response.data as any;
+        const bookings = responseData?.data?.bookings || responseData?.bookings || [];
+        
+        // Extract provider IDs from ACTIVE bookings only (pending, confirmed, scheduled)
+        const bookedProviderIds = new Set<string>();
+        bookings.forEach((booking: any) => {
+          // Only consider active bookings
+          const status = booking.status?.toLowerCase();
+          if (status === 'pending' || status === 'confirmed' || status === 'scheduled') {
+            const providerId = typeof booking.provider === 'object' 
+              ? booking.provider._id 
+              : booking.provider;
+            if (providerId) bookedProviderIds.add(providerId);
+          }
+        });
+        
+        setUserBookedProviderIds(bookedProviderIds);
+      } catch (error) {
+        console.error("Failed to fetch user bookings", error);
+      }
+    };
+    
+    fetchUserBookings();
+  }, [user?.id]);
 
   // Fetch vendor-added services (approved by admin)
   useEffect(() => {
@@ -474,66 +525,143 @@ export function Services() {
     };
   }, []); // Empty dependency array - only run once on mount
 
-  // Fetch services by locality when area is selected
-  useEffect(() => {
+
+
+  // Calculate distance between two coordinates using Haversine formula
+  const calculateDistance = (lat1: number, lng1: number, lat2: number, lng2: number): number => {
+    const toRad = (deg: number) => (deg * Math.PI) / 180;
+    const R = 6371; // Earth's radius in km
+
+    const dLat = toRad(lat2 - lat1);
+    const dLng = toRad(lng2 - lng1);
+
+    const a =
+      Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+      Math.cos(toRad(lat1)) *
+        Math.cos(toRad(lat2)) *
+        Math.sin(dLng / 2) *
+        Math.sin(dLng / 2);
+
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+    return Number((R * c).toFixed(2));
+  };
+
+  // Get distance for a service based on selected area
+  const getServiceDistance = (service: any): number | null => {
     if (!selectedArea) {
-      setLocalityServices([]);
-      setNearbyServices([]);
-      setShowingNearby(false);
-      return;
+      console.log('No area selected, cannot calculate distance');
+      return null;
     }
 
-    const fetchLocalityServices = async () => {
-      try {
-        const response = await areasApi.getServicesByArea(selectedArea.slug, {
-          radiusKm: 3, // Start with 3km radius
-        });
+    console.log('Calculating distance for service:', service.name, 'from area:', selectedArea.name);
+    console.log('All areas loaded:', allAreas.length);
 
-        const services = response.data.services || [];
-        setLocalityServices(services);
-
-        // If no services in the area, fetch nearby alternatives
-        if (services.length === 0) {
-          const nearbyResponse = await areasApi.getServicesByArea(
-            selectedArea.slug,
-            {
-              radiusKm: 10, // Expand to 10km for nearby
-            }
-          );
-          setNearbyServices(nearbyResponse.data.services || []);
-        } else {
-          setNearbyServices([]);
-        }
-      } catch (error) {
-        console.error("Failed to fetch locality services:", error);
-        showToast("Failed to load services for this area", "error");
+    // For hardcoded services, use their locality coordinates
+    if (service.isHardcoded && (service as any).localitySlug) {
+      console.log('Hardcoded service with locality:', (service as any).localitySlug);
+      
+      // If it's the same area, distance is 0
+      if ((service as any).localitySlug === selectedArea.slug) {
+        console.log('Same area, distance = 0');
+        return 0;
       }
-    };
+      
+      // Find the provider's area in allAreas
+      const providerArea = allAreas.find(a => a.slug === (service as any).localitySlug);
+      if (providerArea) {
+        const distance = calculateDistance(
+          selectedArea.coordinates.lat,
+          selectedArea.coordinates.lng,
+          providerArea.coordinates.lat,
+          providerArea.coordinates.lng
+        );
+        console.log('Calculated distance for hardcoded service:', distance, 'km');
+        return distance;
+      }
+      
+      console.log('Provider area not found in allAreas');
+      return null;
+    }
 
-    fetchLocalityServices();
-  }, [selectedArea, showToast]);
+    // Get provider location
+    const provider = typeof service.provider === 'object' ? service.provider : null;
+    if (!provider) {
+      console.log('No provider object found');
+      return null;
+    }
 
-  // Recommendation Algorithm: Sort services by relevance
+    console.log('Provider:', provider.name, 'primaryAreaSlug:', provider.primaryAreaSlug);
+
+    // Try to get coordinates from provider location
+    const providerCoords = provider.location?.coordinates;
+    if (providerCoords && providerCoords.length === 2) {
+      const distance = calculateDistance(
+        selectedArea.coordinates.lat,
+        selectedArea.coordinates.lng,
+        providerCoords[1], // GeoJSON is [lng, lat]
+        providerCoords[0]
+      );
+      console.log('Calculated distance from coordinates:', distance, 'km');
+      return distance;
+    }
+
+    // Fallback: if provider has primaryAreaSlug, calculate using area coordinates
+    if (provider.primaryAreaSlug) {
+      // If same area, distance is 0
+      if (provider.primaryAreaSlug === selectedArea.slug) {
+        console.log('Same area (primaryAreaSlug), distance = 0');
+        return 0;
+      }
+      
+      // Find the provider's area in allAreas
+      const providerArea = allAreas.find(a => a.slug === provider.primaryAreaSlug);
+      if (providerArea) {
+        const distance = calculateDistance(
+          selectedArea.coordinates.lat,
+          selectedArea.coordinates.lng,
+          providerArea.coordinates.lat,
+          providerArea.coordinates.lng
+        );
+        console.log('Calculated distance from primaryAreaSlug:', distance, 'km');
+        return distance;
+      }
+      
+      console.log('Provider area not found in allAreas for slug:', provider.primaryAreaSlug);
+    }
+
+    console.log('Could not calculate distance - no location data available');
+    return null;
+  };
+
+  // Recommendation Algorithm: Sort services by relevance and distance
   const getRecommendationScore = (service: any) => {
     let score = 0;
 
-    // 1. Rating weight (40%)
+    // 1. Rating weight (30%)
     const ratingScore = (service.rating || 4.5) / 5;
-    score += ratingScore * 0.4;
+    score += ratingScore * 0.3;
 
-    // 2. Popularity weight (30%) - based on booking count
+    // 2. Popularity weight (25%) - based on booking count
     const maxBookings = 100; // Normalize to 100 bookings
     const popularityScore = Math.min(
       (service.bookingCount || 0) / maxBookings,
       1
     );
-    score += popularityScore * 0.3;
+    score += popularityScore * 0.25;
 
-    // 3. Vendor priority (20%) - vendor services ranked higher
-    const vendorBonus = !service.isHardcoded ? 0.2 : 0;
+    // 3. Vendor priority (15%) - vendor services ranked higher
+    const vendorBonus = !service.isHardcoded ? 0.15 : 0;
     score += vendorBonus;
 
-    // 4. Locality match (10%) - if user selected a locality
+    // 4. Distance weight (20%) - closer is better
+    const distance = getServiceDistance(service);
+    if (distance !== null) {
+      // Normalize distance: 0km = 1.0, 10km = 0.5, 20km+ = 0
+      const distanceScore = Math.max(0, 1 - distance / 20);
+      score += distanceScore * 0.2;
+    }
+
+    // 5. Locality match (10%) - if user selected a locality
     if (selectedArea && (service as any).localitySlug === selectedArea.slug) {
       score += 0.1;
     }
@@ -541,9 +669,27 @@ export function Services() {
     return score;
   };
 
-  // Combine vendor services (on top) with hardcoded services, then sort by recommendation
-  const allServices = [...vendorServices, ...HARDCODED_SERVICES].sort(
+  // Show only real vendor services (no demo/hardcoded services)
+  const allServices = [...vendorServices].sort(
     (a, b) => {
+      // If area is selected, prioritize distance-based sorting
+      if (selectedArea) {
+        const distA = getServiceDistance(a);
+        const distB = getServiceDistance(b);
+        
+        // Both have distance - sort by distance first
+        if (distA !== null && distB !== null) {
+          if (Math.abs(distA - distB) > 0.5) { // If distance difference > 0.5km
+            return distA - distB; // Closer first
+          }
+        }
+        
+        // One has distance, other doesn't - prioritize the one with distance
+        if (distA !== null && distB === null) return -1;
+        if (distA === null && distB !== null) return 1;
+      }
+      
+      // Fall back to recommendation score
       const scoreA = getRecommendationScore(a);
       const scoreB = getRecommendationScore(b);
       return scoreB - scoreA; // Higher score first
@@ -553,26 +699,15 @@ export function Services() {
   // Filter services based on search query and locality
   let filteredServices = allServices;
 
-  // If locality is selected, show locality-specific services
+  // If locality is selected, show only NEAREST services (within 3km radius)
   if (selectedArea) {
-    // First, get hardcoded services from exact locality
-    const exactLocalityHardcoded = HARDCODED_SERVICES.filter(
-      (service: any) => service.localitySlug === selectedArea.slug
-    );
-
-    // Combine API services with hardcoded services from exact locality
-    const exactLocalityServices = [...localityServices, ...exactLocalityHardcoded];
-
-    if (exactLocalityServices.length > 0) {
-      // Show services from exact locality (both API and hardcoded)
-      filteredServices = exactLocalityServices;
-    } else if (showingNearby && nearbyServices.length > 0) {
-      // No services in exact locality, show nearby API services
-      filteredServices = nearbyServices;
-    } else {
-      // No services found at all
-      filteredServices = [];
-    }
+    const MAX_DISTANCE_KM = 3; // Only show services within 3km
+    
+    filteredServices = allServices.filter((service) => {
+      const distance = getServiceDistance(service);
+      // Include services with distance <= 3km, or services without distance data
+      return distance === null || distance <= MAX_DISTANCE_KM;
+    });
   } else {
     // No locality selected, filter by search query
     filteredServices = allServices.filter((service) => {
@@ -587,6 +722,44 @@ export function Services() {
       return nameMatch || descMatch || catMatch || localityMatch;
     });
   }
+
+  // Apply booked provider filter if enabled
+  if (hideBookedProviders && user) {
+    filteredServices = filteredServices.filter((service) => {
+      const providerId = typeof service.provider === 'object' 
+        ? service.provider._id 
+        : service.provider;
+      return providerId ? !userBookedProviderIds.has(providerId) : true;
+    });
+  }
+
+  // Get unique nearby areas from filtered services (when area is selected)
+  const getNearbyAreasFromServices = (): string[] => {
+    if (!selectedArea || filteredServices.length === 0) return [];
+    
+    const nearbyAreas = new Set<string>();
+    
+    filteredServices.forEach((service) => {
+      // For hardcoded services
+      if (service.isHardcoded && (service as any).locality) {
+        const locality = (service as any).locality;
+        if (locality !== selectedArea.name) {
+          nearbyAreas.add(locality);
+        }
+      }
+      
+      // For vendor services
+      const provider = typeof service.provider === 'object' ? service.provider : null;
+      const areaName = (provider as any)?.primaryAreaName;
+      if (areaName && areaName !== selectedArea.name) {
+        nearbyAreas.add(areaName);
+      }
+    });
+    
+    return Array.from(nearbyAreas).slice(0, 5); // Limit to 5 areas
+  };
+
+  const nearbyAreasWithServices = getNearbyAreasFromServices();
 
   const handleBooking = async () => {
     if (!user) {
@@ -627,24 +800,23 @@ export function Services() {
       return;
     }
 
-    console.log("Booking data:", {
+    const bookingData = {
       user: user.id,
       provider: providerId,
       service: selectedService._id,
       bookingDate,
       bookingTime,
-    });
+    };
+    
+    console.log("=== BOOKING ATTEMPT ===");
+    console.log("Booking data:", bookingData);
+    console.log("Service:", selectedService);
+    console.log("Provider ID:", providerId);
 
     setBookingLoading(true);
     try {
       // Create booking without location data (it's optional)
-      const response = await bookingsApi.createBooking({
-        user: user.id,
-        provider: providerId,
-        service: selectedService._id,
-        bookingDate,
-        bookingTime,
-      });
+      const response = await bookingsApi.createBooking(bookingData);
 
       console.log("Booking response:", response.data);
 
@@ -653,20 +825,75 @@ export function Services() {
       const confirmation = responseData?.booking?.confirmationCode || "pending";
 
       showToast(`Booking received! Confirmation ${confirmation}`, "success");
+      
+      // Refresh user bookings to update the booked providers list
+      if (user?.id) {
+        try {
+          const bookingsResponse = await bookingsApi.getUserBookings(user.id);
+          const bookingsData = bookingsResponse.data as any;
+          const bookings = bookingsData?.data?.bookings || bookingsData?.bookings || [];
+          
+          const bookedProviderIds = new Set<string>();
+          bookings.forEach((booking: any) => {
+            const status = booking.status?.toLowerCase();
+            if (status === 'pending' || status === 'confirmed' || status === 'scheduled') {
+              const bookingProviderId = typeof booking.provider === 'object' 
+                ? booking.provider._id 
+                : booking.provider;
+              if (bookingProviderId) bookedProviderIds.add(bookingProviderId);
+            }
+          });
+          
+          setUserBookedProviderIds(bookedProviderIds);
+        } catch (err) {
+          console.error("Failed to refresh bookings", err);
+        }
+      }
+      
       setSelectedService(null);
       setScheduledDate("");
+      setDuplicateError(null);
+      setShowAlternatives(false);
     } catch (error: any) {
       console.error("Booking error:", error);
       console.error("Error response:", error.response?.data);
 
-      // Show specific error message from backend
-      const errorMessage =
-        error.response?.data?.msg ||
-        error.response?.data?.message ||
-        error.message ||
-        "Booking failed";
+      // Check if it's a duplicate booking error
+      if (error.response?.status === 409 && error.response?.data?.error === "DUPLICATE_BOOKING") {
+        const errorData = error.response.data;
+        console.log("Duplicate booking error data:", errorData);
+        console.log("Alternatives:", errorData.alternatives);
+        console.log("Alternatives length:", errorData.alternatives?.length);
+        
+        setDuplicateError(errorData);
+        
+        // Show alternatives if available
+        if (errorData.alternatives && errorData.alternatives.length > 0) {
+          console.log("Setting showAlternatives to true");
+          setShowAlternatives(true);
+          showToast(
+            `You already have a booking with this provider. Check out ${errorData.alternatives.length} alternative providers!`,
+            "error"
+          );
+        } else {
+          console.log("No alternatives available");
+          showToast(errorData.message || "You already have an active booking with this provider", "error");
+        }
+      } else {
+        // Show specific error message from backend
+        console.log("=== BOOKING ERROR (NOT DUPLICATE) ===");
+        console.log("Status:", error.response?.status);
+        console.log("Error data:", error.response?.data);
+        console.log("Error message:", error.message);
+        
+        const errorMessage =
+          error.response?.data?.msg ||
+          error.response?.data?.message ||
+          error.message ||
+          "Booking failed";
 
-      showToast(errorMessage, "error");
+        showToast(`Booking failed: ${errorMessage}`, "error");
+      }
     } finally {
       setBookingLoading(false);
     }
@@ -711,49 +938,53 @@ export function Services() {
               onChange={(value, area) => {
                 setSelectedLocality(value);
                 setSelectedArea(area);
-                setShowingNearby(false);
               }}
               placeholder="Select Kathmandu locality (e.g., Tinkune, Baneshwor)..."
             />
           </div>
+
+          {/* Filter Options */}
+          <div className="flex items-center gap-4 pt-2 flex-wrap">
+            {user && (
+              <label className="flex items-center gap-2 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={hideBookedProviders}
+                  onChange={(e) => setHideBookedProviders(e.target.checked)}
+                  className="w-4 h-4 text-blue-600 rounded focus:ring-2 focus:ring-blue-400"
+                />
+                <span className="text-sm text-gray-700">
+                  Hide providers I've already booked
+                </span>
+              </label>
+            )}
+            {selectedArea && (
+              <div className="flex flex-col gap-2">
+                <div className="flex items-center gap-2 text-sm text-blue-600">
+                  <MapPin className="w-4 h-4" />
+                  <span className="font-medium">
+                    Showing services sorted by distance from {selectedArea.name}
+                  </span>
+                </div>
+                {nearbyAreasWithServices.length > 0 && (
+                  <div className="flex items-center gap-2 text-xs text-slate-600">
+                    <span className="font-medium">Nearby areas:</span>
+                    <span>{nearbyAreasWithServices.join(", ")}</span>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
         </div>
 
-        {/* No Services in Area - Show Nearby */}
-        {selectedArea &&
-          localityServices.length === 0 &&
-          HARDCODED_SERVICES.filter((s: any) => s.localitySlug === selectedArea.slug).length === 0 &&
-          nearbyServices.length > 0 &&
-          !showingNearby && (
-            <div className="bg-amber-50 border border-amber-200 rounded-2xl p-6">
-              <div className="flex items-start gap-4">
-                <AlertCircle className="w-6 h-6 text-amber-600 flex-shrink-0 mt-1" />
-                <div className="flex-1">
-                  <h3 className="text-lg font-semibold text-amber-900 mb-2">
-                    No services available in {selectedArea.name}
-                  </h3>
-                  <p className="text-amber-700 mb-4">
-                    We found {nearbyServices.length} services in nearby areas.
-                    Would you like to see them?
-                  </p>
-                  <button
-                    onClick={() => setShowingNearby(true)}
-                    className="px-6 py-2 bg-amber-600 text-white rounded-lg font-medium hover:bg-amber-700 transition"
-                  >
-                    Show services near this area
-                  </button>
-                </div>
-              </div>
-            </div>
-          )}
+
 
         {/* Services List */}
         <section>
           <div className="flex items-center justify-between mb-6">
             <h2 className="text-2xl font-bold text-slate-900">
-              {selectedArea && showingNearby
+              {selectedArea
                 ? `Services near ${selectedArea.name}`
-                : selectedArea
-                ? `Services in ${selectedArea.name}`
                 : "Available Services"}
             </h2>
             <span className="text-sm text-slate-500">
@@ -793,11 +1024,23 @@ export function Services() {
                             {service.name}
                           </h3>
                         </div>
-                        {!service.isHardcoded && (
-                          <span className="px-2 py-1 bg-green-100 text-green-700 text-xs rounded-full">
-                            Vendor
-                          </span>
-                        )}
+                        <div className="flex flex-col gap-1 items-end">
+                          {!service.isHardcoded && (
+                            <span className="px-2 py-1 bg-green-100 text-green-700 text-xs rounded-full font-bold">
+                              Vendor
+                            </span>
+                          )}
+                          {(() => {
+                            const providerId = typeof service.provider === 'object' 
+                              ? service.provider._id 
+                              : service.provider;
+                            return providerId && userBookedProviderIds.has(providerId);
+                          })() && (
+                            <span className="px-2 py-1 bg-purple-100 text-purple-700 text-xs rounded-full font-bold">
+                              ✓ Booked
+                            </span>
+                          )}
+                        </div>
                       </div>
                       <p className="text-sm text-slate-600 line-clamp-2 mt-1">
                         {service.description}
@@ -814,12 +1057,45 @@ export function Services() {
                       <Clock className="w-4 h-4 text-slate-400" />
                       {service.bookingCount || 0} bookings
                     </span>
-                    {(service as any).locality && (
-                      <span className="flex items-center gap-1">
-                        <MapPin className="w-4 h-4 text-blue-500" />
-                        {(service as any).locality}
-                      </span>
-                    )}
+                    {(() => {
+                      const distance = getServiceDistance(service);
+                      
+                      // Get area name for the service
+                      let areaName = null;
+                      if (service.isHardcoded && (service as any).locality) {
+                        areaName = (service as any).locality;
+                      } else {
+                        const provider = typeof service.provider === 'object' ? service.provider : null;
+                        areaName = (provider as any)?.primaryAreaName || null;
+                      }
+                      
+                      if (distance !== null && selectedArea) {
+                        // Show distance with area name
+                        if (distance === 0) {
+                          return (
+                            <span className="flex items-center gap-1 text-green-600 font-medium">
+                              <MapPin className="w-4 h-4" />
+                              {areaName || selectedArea.name} (here)
+                            </span>
+                          );
+                        }
+                        return (
+                          <span className="flex items-center gap-1 text-blue-600 font-medium">
+                            <MapPin className="w-4 h-4" />
+                            {areaName ? `${areaName} - ` : ''}{distance} km away
+                          </span>
+                        );
+                      }
+                      if (areaName) {
+                        return (
+                          <span className="flex items-center gap-1">
+                            <MapPin className="w-4 h-4 text-blue-500" />
+                            {areaName}
+                          </span>
+                        );
+                      }
+                      return null;
+                    })()}
                   </div>
 
                   <div className="flex items-center justify-between mt-auto pt-4 border-t border-slate-100">
@@ -829,12 +1105,33 @@ export function Services() {
                         {formatNpr(service.price)}
                       </p>
                     </div>
-                    <button
-                      onClick={() => setSelectedService(service)}
-                      className="px-4 py-2 rounded-xl bg-blue-600 text-white font-semibold hover:bg-blue-700 transition"
-                    >
-                      Book Now
-                    </button>
+                    {(() => {
+                      const providerId = typeof service.provider === 'object' 
+                        ? service.provider._id 
+                        : service.provider;
+                      const isBooked = providerId && userBookedProviderIds.has(providerId);
+                      
+                      if (isBooked) {
+                        return (
+                          <button
+                            disabled
+                            className="px-4 py-2 rounded-xl bg-gray-400 text-white font-semibold cursor-not-allowed opacity-60"
+                            title="You already have an active booking with this provider"
+                          >
+                            Already Booked
+                          </button>
+                        );
+                      }
+                      
+                      return (
+                        <button
+                          onClick={() => setSelectedService(service)}
+                          className="px-4 py-2 rounded-xl bg-blue-600 text-white font-semibold hover:bg-blue-700 transition"
+                        >
+                          Book Now
+                        </button>
+                      );
+                    })()}
                   </div>
                 </article>
               ))}
@@ -849,6 +1146,8 @@ export function Services() {
         onClose={() => {
           setSelectedService(null);
           setScheduledDate("");
+          setDuplicateError(null);
+          setShowAlternatives(false);
         }}
         title={
           selectedService ? `Book ${selectedService.name}` : "Book Service"
@@ -879,15 +1178,121 @@ export function Services() {
               </p>
             </div>
 
-            {selectedService.isHardcoded ? (
-              <div className="bg-amber-50 border border-amber-200 rounded-xl p-4">
-                <p className="text-sm text-amber-800">
-                  This is a demo service for display purposes. Please contact
-                  the service provider directly for bookings.
-                </p>
-              </div>
-            ) : (
-              <>
+            <>
+              {selectedService.isHardcoded && (
+                <div className="bg-blue-50 border border-blue-200 rounded-xl p-4">
+                  <p className="text-sm text-blue-800">
+                    📍 Demo service - You can book this to test the system!
+                  </p>
+                </div>
+              )}
+                {/* Duplicate Booking Error with Alternatives */}
+                {duplicateError && showAlternatives && (() => {
+                  console.log("Rendering duplicate error modal");
+                  console.log("duplicateError:", duplicateError);
+                  console.log("showAlternatives:", showAlternatives);
+                  return (
+                  <div className="bg-red-50 border border-red-200 rounded-xl p-4 space-y-4">
+                    <div className="flex items-start gap-3">
+                      <AlertCircle className="w-5 h-5 text-red-600 flex-shrink-0 mt-0.5" />
+                      <div>
+                        <h4 className="font-semibold text-red-900">Already Booked</h4>
+                        <p className="text-sm text-red-700 mt-1">
+                          {duplicateError.message}
+                        </p>
+                        {duplicateError.existingBooking && (
+                          <p className="text-xs text-red-600 mt-2">
+                            Existing booking: {duplicateError.existingBooking.confirmationCode} 
+                            {duplicateError.existingBooking.bookingDate && 
+                              ` on ${duplicateError.existingBooking.bookingDate}`}
+                          </p>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Alternative Providers */}
+                    {duplicateError.alternatives && duplicateError.alternatives.length > 0 && (() => {
+                      console.log("Rendering alternatives section, count:", duplicateError.alternatives.length);
+                      return (
+                      <div className="space-y-3">
+                        <h5 className="font-semibold text-slate-900 text-sm flex items-center gap-2">
+                          <MapPin className="w-4 h-4 text-blue-600" />
+                          Try these nearby alternatives instead:
+                        </h5>
+                        <div className="space-y-2 max-h-64 overflow-y-auto">
+                          {duplicateError.alternatives.map((alt: any, idx: number) => {
+                            // Check if this is the nearest alternative
+                            const isNearest = idx === 0 && alt.distanceKm !== null;
+                            
+                            return (
+                              <div
+                                key={idx}
+                                className={`bg-white border rounded-lg p-3 hover:border-blue-400 transition cursor-pointer ${
+                                  isNearest 
+                                    ? 'border-blue-300 ring-2 ring-blue-100' 
+                                    : 'border-slate-200'
+                                }`}
+                                onClick={() => {
+                                  // Find the service in our list and select it
+                                  const altService = allServices.find(
+                                    (s) => s._id === alt.service.id
+                                  );
+                                  if (altService) {
+                                    setSelectedService(altService);
+                                    setDuplicateError(null);
+                                    setShowAlternatives(false);
+                                  }
+                                }}
+                              >
+                                <div className="flex items-start justify-between gap-2">
+                                  <div className="flex-1">
+                                    <div className="flex items-center gap-2">
+                                      <p className="font-medium text-slate-900 text-sm">
+                                        {alt.provider.name}
+                                      </p>
+                                      {isNearest && (
+                                        <span className="px-2 py-0.5 bg-blue-100 text-blue-700 text-xs rounded-full font-bold">
+                                          Nearest
+                                        </span>
+                                      )}
+                                    </div>
+                                    <p className="text-xs text-slate-600 mt-0.5">
+                                      {alt.service.name}
+                                    </p>
+                                    {alt.distanceKm !== null && (
+                                      <p className="text-xs text-blue-600 mt-1 flex items-center gap-1 font-medium">
+                                        <MapPin className="w-3 h-3" />
+                                        {alt.distanceKm} km away
+                                      </p>
+                                    )}
+                                  </div>
+                                  <div className="text-right">
+                                    <p className="font-bold text-slate-900">
+                                      {formatNpr(alt.service.price)}
+                                    </p>
+                                  </div>
+                                </div>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      </div>
+                      );
+                    })()}
+
+                    <button
+                      onClick={() => {
+                        setDuplicateError(null);
+                        setShowAlternatives(false);
+                      }}
+                      className="text-sm text-red-700 hover:text-red-900 font-medium"
+                    >
+                      Dismiss
+                    </button>
+                  </div>
+                  );
+                })()}
+
                 <div>
                   <label className="block text-sm font-medium text-slate-600 mb-2">
                     Choose date & time
@@ -901,15 +1306,14 @@ export function Services() {
                   />
                 </div>
 
-                <button
-                  onClick={handleBooking}
-                  disabled={bookingLoading || !scheduledDate}
-                  className="w-full py-3 bg-slate-900 text-white rounded-xl font-semibold hover:bg-slate-800 disabled:opacity-50"
-                >
-                  {bookingLoading ? "Booking..." : "Confirm Booking"}
-                </button>
-              </>
-            )}
+              <button
+                onClick={handleBooking}
+                disabled={bookingLoading || !scheduledDate}
+                className="w-full py-3 bg-slate-900 text-white rounded-xl font-semibold hover:bg-slate-800 disabled:opacity-50"
+              >
+                {bookingLoading ? "Booking..." : "Confirm Booking"}
+              </button>
+            </>
           </div>
         )}
       </Modal>

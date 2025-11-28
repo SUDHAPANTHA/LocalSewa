@@ -84,4 +84,22 @@ export const bookingsApi = {
     api.get<{ bookings: Booking[] }>("/admin-get-all-bookings", {
       signal: config?.signal,
     }),
+
+  // GET PROVIDER RECOMMENDATIONS
+  getProviderRecommendations: (params: {
+    serviceCategory?: string;
+    userLocation?: string; // "lat,lng" or area slug
+    hideBooked?: boolean;
+    limit?: number;
+    userId?: string;
+  }) =>
+    api.get<{
+      providers: Array<{
+        provider: any;
+        service: any;
+        distanceKm: number | null;
+        isBooked: boolean;
+      }>;
+      total: number;
+    }>("/recommendations", { params }),
 };
