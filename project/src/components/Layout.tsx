@@ -11,7 +11,7 @@ export function Layout({ children }: LayoutProps) {
 
   const handleLogout = () => {
     logout();
-    window.location.hash = "/";
+    // AuthContext handles redirect
   };
 
   const getDashboardLink = () => {

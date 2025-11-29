@@ -33,6 +33,7 @@ export function Login() {
       login(response.data.data);
       showToast("Login successful!", "success");
 
+      // Small delay to ensure localStorage is updated
       setTimeout(() => {
         // Check if there's a saved redirect path
         const redirectPath = sessionStorage.getItem('redirectAfterLogin');
@@ -40,18 +41,20 @@ export function Login() {
         if (redirectPath) {
           // Clear the saved path and redirect to it
           sessionStorage.removeItem('redirectAfterLogin');
-          window.location.hash = redirectPath;
+          window.location.href = window.location.origin + "/#" + redirectPath;
         } else {
           // Default dashboard based on role
+          let dashboardPath = "/user/dashboard";
           if (role === "admin") {
-            window.location.hash = "/admin/dashboard";
+            dashboardPath = "/admin/dashboard";
           } else if (role === "service_provider") {
-            window.location.hash = "/vendor/dashboard";
-          } else {
-            window.location.hash = "/user/dashboard";
+            dashboardPath = "/vendor/dashboard";
           }
+          
+          // Force full reload to dashboard
+          window.location.href = window.location.origin + "/#" + dashboardPath;
         }
-      }, 500);
+      }, 100);
     } catch (error) {
       showToast(getApiErrorMessage(error, "Login failed"), "error");
     } finally {

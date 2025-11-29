@@ -9,5 +9,7 @@ export const messagesApi = {
     api.get<{ conversation: Message[] }>(`/messages/${userId}/${otherId}`),
 
   chatbot: (message: string) =>
-    api.post<{ reply: string }>('/chatbot', { message }),
+    api.post<{
+      suggestions: never[]; reply: string 
+}>('/chatbot', { message }),
 };
