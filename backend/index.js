@@ -1688,6 +1688,46 @@ app.post(
   }
 );
 
+app.delete("/provider/:id/cv", async (req, res) => {
+  try {
+    const provider = await ServiceProvider.findById(req.params.id);
+    if (!provider) {
+      return res.status(404).json({ msg: "Provider not found" });
+    }
+
+    // Delete CV file from filesystem if it exists
+    if (provider.cvFile?.fileName) {
+      const cvPath = path.join(__dirname, "uploads", "cvs", provider.cvFile.fileName);
+      fs.unlink(cvPath, (err) => {
+        if (err) console.error("Failed to delete CV file:", err);
+      });
+    }
+
+    // Clear CV-related fields
+    provider.cvFile = undefined;
+    provider.cvStatus = "not_provided";
+    provider.cvScore = null;
+    provider.cvSummary = undefined;
+    provider.cvKeywords = [];
+    provider.cvSignals = undefined;
+    provider.skillTags = [];
+    provider.cvReviewerNote = undefined;
+    provider.cvReviewedAt = undefined;
+    provider.cvReviewer = undefined;
+    provider.isApproved = false;
+
+    await provider.save();
+
+    res.json({
+      msg: "CV deleted successfully",
+      provider,
+    });
+  } catch (err) {
+    console.error("CV deletion failed", err);
+    res.status(500).json({ msg: "CV deletion failed", error: err.message });
+  }
+});
+
 app.patch("/provider/:id/location", async (req, res) => {
   try {
     const lat = Number(req.body.lat ?? req.body.latitude);

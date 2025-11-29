@@ -64,22 +64,22 @@ export function VendorDashboard() {
   > = {
     approved: {
       label: "CV approved",
-      badge: "bg-emerald-100 text-emerald-700",
+      badge: "bg-green-100 text-green-700",
       helper: "You can publish services and receive bookings.",
     },
     pending: {
       label: "Pending review",
-      badge: "bg-amber-100 text-amber-700",
+      badge: "bg-yellow-100 text-yellow-700",
       helper: "Admin will review your CV shortly.",
     },
     rejected: {
       label: "Needs revision",
-      badge: "bg-rose-100 text-rose-700",
+      badge: "bg-red-100 text-red-700",
       helper: "Upload a stronger CV to get approved.",
     },
     not_provided: {
       label: "No CV on file",
-      badge: "bg-slate-200 text-slate-700",
+      badge: "bg-gray-200 text-gray-700",
       helper: "Upload a PDF CV to start the approval process.",
     },
   };
@@ -88,8 +88,11 @@ export function VendorDashboard() {
   const cvBadge = cvStatusMeta[currentCvStatus] || cvStatusMeta.not_provided;
 
   const handleCvUpload = async () => {
-    if (!user?.id || !selectedCvFile)
-      return showToast("Attach a PDF CV first", "error");
+    if (!user?.id) return;
+    if (!selectedCvFile) {
+      showToast("Attach a PDF CV first", "error");
+      return;
+    }
 
     setCvUploading(true);
     setCvUploadProgress(6);
@@ -126,18 +129,31 @@ export function VendorDashboard() {
     setSelectedCvFile(file || null);
   };
 
+  const handleDeleteCv = async () => {
+    if (!user?.id) return;
+    if (!confirm("Are you sure you want to delete your CV? This cannot be undone.")) return;
+
+    try {
+      await providerApi.deleteCv(user.id);
+      showToast("CV deleted successfully", "success");
+      fetchData(user.id);
+    } catch (error) {
+      showToast(getApiErrorMessage(error, "Failed to delete CV"), "error");
+    }
+  };
+
   if (loading) {
     return (
       <Layout>
         {ToastComponent}
-        <div className="max-w-4xl mx-auto animate-fade-in text-center py-20">
+        <div className="max-w-4xl mx-auto py-20 text-center">
           <motion.div
             initial={{ opacity: 0, y: 8 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.4 }}
-            className="inline-block px-6 py-4 bg-gradient-to-r from-purple-600 to-blue-500 rounded-2xl shadow-lg text-white"
+            className="inline-block px-6 py-4 bg-blue-500 text-white rounded-xl shadow-lg font-bold"
           >
-            Loading provider insights...
+            Loading provider dashboard...
           </motion.div>
         </div>
       </Layout>
@@ -147,157 +163,266 @@ export function VendorDashboard() {
   return (
     <Layout>
       {ToastComponent}
-      <div className="max-w-6xl mx-auto my-12 px-4 md:px-0">
-        {/* Hero */}
-        <div className="bg-gradient-to-br from-purple-700 via-pink-600 to-pink-400 rounded-3xl shadow-2xl p-10 mb-8 relative overflow-hidden">
-          <div className="absolute -left-16 -top-12 w-56 h-56 bg-pink-500/20 rounded-full blur-3xl"></div>
-          <div className="absolute -right-20 -bottom-16 w-72 h-72 bg-purple-900/20 rounded-full blur-3xl"></div>
-          <div className="relative z-10 flex items-center gap-5">
-            <div className="w-16 h-16 bg-white/10 rounded-2xl flex items-center justify-center backdrop-blur-sm border border-white/20">
-              <Briefcase className="w-10 h-10 text-white" />
-            </div>
-            <div>
-              <h1 className="text-5xl font-black text-white mb-2">
-                Provider Hub
-              </h1>
-              <p className="text-pink-100 text-lg">
-                Welcome back, {user?.name}
-              </p>
-            </div>
-          </div>
+      <div className="max-w-6xl mx-auto px-4 md:px-0">
+        {/* Header */}
+        <div className="bg-gradient-to-br from-purple-700 via-pink-600 to-pink-400 text-white py-12 px-6 rounded-2xl shadow-md mb-8">
+          <h1 className="text-3xl font-bold text-gray-900">
+            Welcome back, {user?.name}
+          </h1>
+          <p className="text-gray-500 mt-1">Your dashboard overview</p>
         </div>
 
-        {/* Stats cards */}
+        {/* Stats */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-          <Card
-            icon={Briefcase}
-            value={services.length}
-            label="Total Services"
-          />
-          <Card
-            icon={Calendar}
-            value={bookings.length}
-            label="Total Bookings"
-            pending={pendingBookings.length}
-            bg="bg-black text-white"
-            pendingColor="text-purple-400"
-          />
-          <Card
-            icon={ShieldCheck}
-            value={
-              providerProfile?.smartScore
-                ? `${(providerProfile.smartScore * 100).toFixed(0)}%`
-                : "0%"
-            }
-            label="Smart Score"
-            bg="bg-purple-600 text-white"
-          />
+          <div className="bg-white p-6 rounded-xl shadow border border-gray-200">
+            <h3 className="text-2xl font-bold text-gray-900">
+              {services.length}
+            </h3>
+            <p className="text-gray-500 text-sm mt-1">Total Services</p>
+          </div>
+          <div className="bg-white p-6 rounded-xl shadow border border-gray-200">
+            <h3 className="text-2xl font-bold text-gray-900">
+              {bookings.length}
+            </h3>
+            <p className="text-gray-500 text-sm mt-1">Total Bookings</p>
+            <p className="text-sm text-yellow-600 mt-1">
+              {pendingBookings.length} pending
+            </p>
+          </div>
+          <div className="bg-white p-6 rounded-xl shadow border border-gray-200">
+            <h3 className="text-2xl font-bold text-gray-900">
+              {providerProfile?.smartScore
+                ? (providerProfile.smartScore * 100).toFixed(0)
+                : "0"}
+              %
+            </h3>
+            <p className="text-gray-500 text-sm mt-1">Smart Score</p>
+          </div>
         </div>
 
         {/* Quick Actions */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-          <ActionCard
+          <motion.a
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ type: "spring", stiffness: 200, damping: 20 }}
             href="#/vendor/services"
-            title="My Services"
-            desc="Manage your services"
-            Icon={Briefcase}
-          />
-          <ActionCard
+            className="group relative flex flex-col justify-between rounded-2xl p-6 shadow-lg bg-gradient-to-r from-purple-500 via-pink-500 to-red-500 text-white overflow-hidden"
+          >
+            <div className="absolute top-0 right-0 -mt-6 -mr-6 w-16 h-16 bg-white/20 rounded-full flex items-center justify-center text-white font-black text-xl">
+              S
+            </div>
+            <div className="flex items-center gap-4 mb-4">
+              <div className="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center transition-all duration-300 group-hover:bg-white">
+                <Briefcase className="w-6 h-6 group-hover:text-purple-600 text-white transition-colors duration-300" />
+              </div>
+              <h3 className="text-xl font-black">{"My Services"}</h3>
+            </div>
+            <p className="text-sm">{"Manage your services"}</p>
+          </motion.a>
+
+          <motion.a
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{
+              type: "spring",
+              stiffness: 200,
+              damping: 20,
+              delay: 0.1,
+            }}
             href="#/vendor/bookings"
-            title="Bookings"
-            desc="Review and manage"
-            Icon={Calendar}
-            primary
-            pending={pendingBookings.length}
-          />
-          <ActionCard
+            className="group relative flex flex-col justify-between rounded-2xl p-6 shadow-lg bg-gradient-to-r from-blue-500 via-indigo-500 to-purple-500 text-white overflow-hidden"
+          >
+            <div className="absolute top-0 right-0 -mt-6 -mr-6 w-16 h-16 bg-white/20 rounded-full flex items-center justify-center text-white font-black text-xl">
+              S
+            </div>
+            <div className="flex items-center gap-4 mb-4">
+              <div className="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center transition-all duration-300 group-hover:bg-white">
+                <Calendar className="w-6 h-6 group-hover:text-blue-600 text-white transition-colors duration-300" />
+              </div>
+              <h3 className="text-xl font-black">{"Bookings"}</h3>
+            </div>
+            <p className="text-sm">{"Manage customer bookings"}</p>
+          </motion.a>
+
+          <motion.a
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{
+              type: "spring",
+              stiffness: 200,
+              damping: 20,
+              delay: 0.2,
+            }}
             href="#/vendor/chat"
-            title="Messages"
-            desc="Chat with customers"
-            Icon={MessageCircle}
-          />
-          <ActionCard
+            className="group relative flex flex-col justify-between rounded-2xl p-6 shadow-lg bg-gradient-to-r from-green-400 via-teal-500 to-cyan-500 text-white overflow-hidden"
+          >
+            <div className="absolute top-0 right-0 -mt-6 -mr-6 w-16 h-16 bg-white/20 rounded-full flex items-center justify-center text-white font-black text-xl">
+              S
+            </div>
+            <div className="flex items-center gap-4 mb-4">
+              <div className="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center transition-all duration-300 group-hover:bg-white">
+                <MessageCircle className="w-6 h-6 group-hover:text-green-600 text-white transition-colors duration-300" />
+              </div>
+              <h3 className="text-xl font-black">{"Messages"}</h3>
+            </div>
+            <p className="text-sm">{"Chat with customers"}</p>
+          </motion.a>
+
+          <motion.a
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{
+              type: "spring",
+              stiffness: 200,
+              damping: 20,
+              delay: 0.3,
+            }}
             href="#/vendor/complaints"
-            title="Complaints"
-            desc="View feedback"
-            Icon={AlertCircle}
-          />
+            className="group relative flex flex-col justify-between rounded-2xl p-6 shadow-lg bg-gradient-to-r from-orange-400 via-red-400 to-pink-500 text-white overflow-hidden"
+          >
+            <div className="absolute top-0 right-0 -mt-6 -mr-6 w-16 h-16 bg-white/20 rounded-full flex items-center justify-center text-white font-black text-xl">
+              S
+            </div>
+            <div className="flex items-center gap-4 mb-4">
+              <div className="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center transition-all duration-300 group-hover:bg-white">
+                <AlertCircle className="w-6 h-6 group-hover:text-red-600 text-white transition-colors duration-300" />
+              </div>
+              <h3 className="text-xl font-black">{"Complaints"}</h3>
+            </div>
+            <p className="text-sm">{"View complaints"}</p>
+          </motion.a>
+        </div>
+
+        {/* CV Upload */}
+        <div className="bg-white p-6 rounded-xl shadow border border-gray-200 mb-8">
+          <h3 className="text-xl font-bold text-gray-900 mb-2">
+            CV & Compliance
+          </h3>
+          <p className="text-gray-500 text-sm mb-4">{cvBadge.helper}</p>
+          <label className="flex items-center gap-3 px-4 py-3 border-2 border-dashed border-gray-300 rounded-xl cursor-pointer hover:border-blue-600">
+            <Upload className="w-5 h-5 text-blue-600" />
+            <span>{selectedCvFile?.name || "Attach PDF CV"}</span>
+            <input
+              type="file"
+              accept="application/pdf"
+              className="hidden"
+              onChange={handleCvFileChange}
+            />
+          </label>
+          <button
+            onClick={handleCvUpload}
+            disabled={cvUploading || !selectedCvFile}
+            className="mt-4 px-6 py-3 rounded-xl bg-blue-600 text-white font-bold hover:bg-blue-700 disabled:opacity-50"
+          >
+            {cvUploading ? "Uploading..." : "Submit CV"}
+          </button>
+
+          {cvUploading && (
+            <div className="w-full bg-gray-100 rounded-full h-2 mt-2 overflow-hidden">
+              <div
+                className="h-2 rounded-full bg-blue-600"
+                style={{ width: `${cvUploadProgress}%` }}
+              />
+            </div>
+          )}
+
+          {providerProfile?.cvReviewerNote && (
+            <p className="text-sm text-red-600 mt-2">
+              Reviewer note: {providerProfile.cvReviewerNote}
+            </p>
+          )}
+
+          {/* View/Delete CV if uploaded */}
+          {providerProfile?.cvFile?.url && (
+            <div className="mt-4 p-4 bg-gray-50 rounded-lg border border-gray-200">
+              <p className="text-sm font-medium text-gray-700 mb-3">
+                Current CV: {providerProfile.cvFile.originalName || "CV.pdf"}
+              </p>
+              <div className="flex gap-3">
+                <a
+                  href={`${import.meta.env.VITE_API_URL || "http://localhost:5000"}${providerProfile.cvFile.url}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition"
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                  </svg>
+                  View CV
+                </a>
+                <button
+                  onClick={handleDeleteCv}
+                  className="flex items-center gap-2 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition"
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                  </svg>
+                  Delete CV
+                </button>
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* Recent Bookings */}
+        <div className="bg-white p-6 rounded-xl shadow border border-gray-200">
+          <h3 className="text-lg font-bold text-gray-900 mb-4">
+            Recent Bookings
+          </h3>
+          {bookings.length === 0 ? (
+            <p className="text-gray-500 text-sm">
+              No bookings yet — share your services to get started.
+            </p>
+          ) : (
+            <div className="space-y-2">
+              {bookings.slice(0, 6).map((b) => (
+                <div
+                  key={(b as any).id}
+                  className="flex justify-between p-3 border rounded-lg"
+                >
+                  <div>
+                    <p className="font-semibold">
+                      {(b as any).customerName || "Unknown"}
+                    </p>
+                    <p className="text-gray-500 text-sm">
+                      {(b as any).serviceName || "—"}
+                    </p>
+                  </div>
+                  <div className="text-gray-500 text-sm">
+                    {(b as any).date || "—"}
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
       </div>
     </Layout>
   );
 }
 
-// Card component for stats
-function Card({
-  icon: Icon,
-  value,
-  label,
-  pending,
-  bg = "bg-white text-black",
-  pendingColor = "text-purple-600",
-}: any) {
+// Small ActionCard
+function ActionCard({ href, title, desc, Icon }: any) {
   return (
-    <div className={`${bg} rounded-2xl shadow-lg p-8 relative`}>
-      <Icon className="w-10 h-10 mb-4" />
-      <h3 className="text-4xl font-black mb-2">{value}</h3>
-      <p className="text-sm uppercase tracking-wider">{label}</p>
-      {pending !== undefined && (
-        <p className={`text-xs mt-2 font-semibold ${pendingColor}`}>
-          {pending} pending
-        </p>
-      )}
-    </div>
-  );
-}
-
-// Reusable ActionCard
-function ActionCard({
-  href,
-  title,
-  desc,
-  Icon,
-  primary = false,
-  pending,
-}: any) {
-  return (
-    <motion.a
-      whileHover={{ y: -4 }}
+    <a
       href={href}
-      className={`group flex flex-col justify-between rounded-2xl p-6 shadow-lg no-underline ${
-        primary
-          ? "bg-gradient-to-br from-purple-600 to-indigo-700 text-white"
-          : "bg-white border-2 border-black text-black"
-      }`}
+      className="flex flex-col items-start p-6 bg-white rounded-xl shadow border border-gray-200 hover:shadow-lg transition"
     >
-      <div
-        className={`w-14 h-14 bg-purple-100 rounded-2xl flex items-center justify-center mb-4 transition-all group-hover:brightness-110`}
-      >
-        <Icon
-          className={`w-7 h-7 ${primary ? "text-white" : "text-purple-600"}`}
-        />
+      <div className="w-12 h-12 bg-blue-50 rounded-xl flex items-center justify-center mb-4">
+        <Icon className="w-6 h-6 text-blue-600" />
       </div>
-      <div>
-        <h4 className={`text-2xl font-black ${primary ? "text-white" : ""}`}>
-          {title}
-        </h4>
-        <p
-          className={`text-sm mt-1 ${
-            primary ? "text-purple-100" : "text-gray-600"
-          }`}
-        >
-          {desc}
-        </p>
-        {pending && (
-          <p
-            className={`mt-2 text-sm font-bold ${
-              primary ? "text-white" : "text-purple-600"
-            }`}
-          >
-            {pending} pending
-          </p>
-        )}
-      </div>
-    </motion.a>
+      <h4 className="text-lg font-bold text-gray-900">{title}</h4>
+      <p className="text-gray-500 text-sm">{desc}</p>
+    </a>
   );
 }

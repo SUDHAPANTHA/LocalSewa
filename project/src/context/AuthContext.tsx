@@ -37,8 +37,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     localStorage.removeItem("user");
     sessionStorage.clear();
 
-    // Force redirect to homepage and reload
-    window.location.href = window.location.origin + "/#/";
+    // Force redirect to homepage without history
+    window.location.replace(window.location.origin + "/#/");
   };
 
   return (

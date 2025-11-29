@@ -32,5 +32,10 @@ export const providerApi = {
       `/provider/${providerId}/location`,
       payload
     ),
+
+  deleteCv: (providerId: string) =>
+    api.delete<{ msg: string; provider: ServiceProvider }>(
+      `/provider/${providerId}/cv`
+    ),
 };
 

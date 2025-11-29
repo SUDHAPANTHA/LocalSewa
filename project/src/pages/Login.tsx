@@ -41,7 +41,7 @@ export function Login() {
         if (redirectPath) {
           // Clear the saved path and redirect to it
           sessionStorage.removeItem('redirectAfterLogin');
-          window.location.href = window.location.origin + "/#" + redirectPath;
+          window.location.replace(window.location.origin + "/#" + redirectPath);
         } else {
           // Default dashboard based on role
           let dashboardPath = "/user/dashboard";
@@ -51,8 +51,8 @@ export function Login() {
             dashboardPath = "/vendor/dashboard";
           }
           
-          // Force full reload to dashboard
-          window.location.href = window.location.origin + "/#" + dashboardPath;
+          // Force full reload to dashboard without history
+          window.location.replace(window.location.origin + "/#" + dashboardPath);
         }
       }, 100);
     } catch (error) {
