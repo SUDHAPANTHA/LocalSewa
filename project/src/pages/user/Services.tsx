@@ -18,7 +18,6 @@ import {
   AlertCircle,
 } from "lucide-react";
 import { LocalityAutocomplete } from "../../components/LocalityAutocomplete";
-import { HARDCODED_SERVICES } from "../../data/hardcodedServices";
 
 // Hardcoded services now imported from separate file: hardcodedServices.ts
 // Total: 31 services covering all Kathmandu areas
@@ -740,7 +739,7 @@ export function Services() {
 
   // Step 1: Filter by locality/distance if selected
   if (selectedArea) {
-    const MAX_DISTANCE_KM = 3; // Only show services within 3km
+    const MAX_DISTANCE_KM = 3; // When searching by area, show services within 3km only
 
     filteredServices = allServices.filter((service) => {
       const distance = getServiceDistance(service);
