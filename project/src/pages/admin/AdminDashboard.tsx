@@ -99,14 +99,14 @@ export function AdminDashboard() {
     {
       title: "AI Demand Forecasting",
       description:
-        "Predictive time-series model that anticipates spikes in service requests so you can staff and promote accordingly.",
+        "Predictive time-series model anticipating spikes in service requests for better planning.",
       icon: Brain,
       badge: "AI",
     },
     {
       title: "AI Risk & Anomaly Detection",
       description:
-        "Monitors bookings for suspicious activity, flagging rapid cancellations or duplicate requests for manual review.",
+        "Monitors bookings for suspicious activity, flagging rapid cancellations or duplicate requests.",
       icon: Shield,
       badge: "AI",
     },
@@ -115,8 +115,10 @@ export function AdminDashboard() {
   if (loading && !errorMessage) {
     return (
       <Layout>
-        <div className="max-w-4xl mx-auto animate-fade-in text-center py-20">
-          <p className="text-gray-600">Loading admin overview...</p>
+        <div className="max-w-4xl mx-auto py-20 text-center">
+          <div className="inline-block px-6 py-4 bg-purple-600 text-white rounded-xl shadow-lg font-bold animate-pulse">
+            Loading admin dashboard...
+          </div>
         </div>
       </Layout>
     );
@@ -124,156 +126,139 @@ export function AdminDashboard() {
 
   return (
     <Layout>
-      <div className="max-w-6xl mx-auto animate-fade-in my-12 px-4">
+      {/* ===================== HEADER ======================= */}
+      <div className="bg-gradient-to-br from-purple-700 via-pink-600 to-pink-400 text-white py-12 px-6 shadow-md">
+        <div className="max-w-7xl mx-auto">
+          <h1 className="text-4xl font-black">Admin Dashboard</h1>
+          <p className="text-white/80 mt-2">
+            Manage users, providers, bookings & platform intelligence
+          </p>
+        </div>
+      </div>
+
+      <div className="max-w-7xl mx-auto px-4 -mt-10 relative z-10">
+        {/* ERROR */}
         {errorMessage && (
-          <div className="mb-6 rounded-2xl bg-red-100 px-6 py-4 text-red-800 shadow">
+          <div className="mb-6 bg-red-100 border border-red-300 p-5 rounded-xl text-red-700 shadow">
             <p className="font-bold">{errorMessage}</p>
             <button
               onClick={fetchData}
-              className="mt-3 px-4 py-2 bg-red-600 text-white rounded-lg font-bold hover:bg-red-500 transition-all duration-300"
+              className="mt-3 bg-red-600 text-white px-5 py-2 rounded-lg font-semibold hover:bg-red-500"
             >
               Retry
             </button>
           </div>
         )}
 
-        {/* Quick Stats - same style as user dashboard */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-          <section className="relative rounded-2xl p-6 shadow-lg bg-gradient-to-br from-purple-600 to-pink-500 text-white overflow-hidden hover:shadow-2xl transform hover:-translate-y-2 transition-all duration-300">
-            <UserIcon className="w-10 h-10 text-white mb-4" />
-            <h3 className="text-4xl font-black mb-2">{users.length}</h3>
-            <p className="text-white/90 text-sm uppercase tracking-wider">
-              Total Users
-            </p>
-          </section>
+        {/* ===================== STATS ======================= */}
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-10">
+          <div className="bg-white rounded-xl shadow p-6 border hover:shadow-xl transition">
+            <UserIcon className="w-10 h-10 text-purple-600 mb-3" />
+            <p className="text-gray-500">Total Users</p>
+            <p className="text-3xl font-black">{users.length}</p>
+          </div>
 
-          <section className="relative rounded-2xl p-6 shadow-lg bg-gradient-to-br from-green-400 to-emerald-500 text-white overflow-hidden hover:shadow-2xl transform hover:-translate-y-2 transition-all duration-300">
-            <Users className="w-10 h-10 text-white mb-4" />
-            <h3 className="text-4xl font-black mb-2">{providers.length}</h3>
-            <p className="text-white/90 text-sm uppercase tracking-wider">
-              Total Providers
-            </p>
+          <div className="bg-white rounded-xl shadow p-6 border hover:shadow-xl transition">
+            <Users className="w-10 h-10 text-green-600 mb-3" />
+            <p className="text-gray-500">Service Providers</p>
+            <p className="text-3xl font-black">{providers.length}</p>
             {pendingProviders.length > 0 && (
-              <p className="text-white font-semibold text-sm mt-2">
+              <p className="text-yellow-600 font-semibold mt-1">
                 {pendingProviders.length} pending
               </p>
             )}
-          </section>
+          </div>
 
-          <section className="relative rounded-2xl p-6 shadow-lg bg-gradient-to-br from-purple-700 to-pink-500 text-white overflow-hidden hover:shadow-2xl transform hover:-translate-y-2 transition-all duration-300">
-            <Layers className="w-10 h-10 text-white mb-4" />
-            <h3 className="text-4xl font-black mb-2">{services.length}</h3>
-            <p className="text-white/90 text-sm uppercase tracking-wider">
-              Active Services
-            </p>
-          </section>
+          <div className="bg-white rounded-xl shadow p-6 border hover:shadow-xl transition">
+            <Layers className="w-10 h-10 text-pink-600 mb-3" />
+            <p className="text-gray-500">Services</p>
+            <p className="text-3xl font-black">{services.length}</p>
+          </div>
 
-          <section className="relative rounded-2xl p-6 shadow-lg bg-gradient-to-br from-blue-500 to-indigo-600 text-white overflow-hidden hover:shadow-2xl transform hover:-translate-y-2 transition-all duration-300">
-            <Calendar className="w-10 h-10 text-white mb-4" />
-            <h3 className="text-4xl font-black mb-2">{bookings.length}</h3>
-            <p className="text-white/90 text-sm uppercase tracking-wider">
-              Total Bookings
-            </p>
+          <div className="bg-white rounded-xl shadow p-6 border hover:shadow-xl transition">
+            <Calendar className="w-10 h-10 text-blue-600 mb-3" />
+            <p className="text-gray-500">Bookings</p>
+            <p className="text-3xl font-black">{bookings.length}</p>
             {pendingBookings.length > 0 && (
-              <p className="text-white font-semibold text-sm mt-2">
+              <p className="text-yellow-600 font-semibold mt-1">
                 {pendingBookings.length} pending
               </p>
             )}
-          </section>
+          </div>
         </div>
 
-        {/* Action Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-5 gap-6 mb-8">
+        {/* ===================== QUICK ACTIONS ======================= */}
+        <div className="grid grid-cols-1 md:grid-cols-5 gap-6 mb-12">
           <a
             href="#/admin/providers"
-            className="relative rounded-2xl p-6 shadow-lg bg-white hover:bg-purple-50 transition transform hover:-translate-y-1"
+            className="group rounded-2xl p-6 shadow-lg bg-gradient-to-br from-purple-600 to-pink-500 text-white hover:-translate-y-2 transition-all"
           >
-            <div className="w-14 h-14 bg-purple-100 rounded-2xl flex items-center justify-center mb-4">
-              <Users className="w-8 h-8 text-purple-600" />
-            </div>
-            <h3 className="text-xl font-black mb-2">Manage Providers</h3>
-            <p className="text-sm text-gray-600">Approve or reject providers</p>
-            {pendingProviders.length > 0 && (
-              <p className="text-purple-600 font-bold text-sm mt-2">
-                {pendingProviders.length} pending
-              </p>
-            )}
+            <Users className="w-10 h-10 text-white mb-3" />
+            <h3 className="text-xl font-bold">Manage Providers</h3>
+            <p className="text-white/90 text-sm mt-1">
+              Approve or reject providers
+            </p>
           </a>
 
           <a
             href="#/admin/bookings"
-            className="relative rounded-2xl p-6 shadow-lg bg-gradient-to-br from-purple-600 to-pink-500 text-white hover:from-purple-700 hover:to-pink-600 transform hover:-translate-y-1 transition"
+            className="group rounded-2xl p-6 shadow-lg bg-gradient-to-br from-blue-500 to-indigo-600 text-white hover:-translate-y-2 transition-all"
           >
-            <div className="w-14 h-14 bg-white/20 rounded-2xl flex items-center justify-center mb-4">
-              <Calendar className="w-8 h-8 text-white" />
-            </div>
-            <h3 className="text-xl font-black mb-2">Manage Bookings</h3>
-            <p className="text-sm text-white/90">Review and manage bookings</p>
-            {pendingBookings.length > 0 && (
-              <p className="text-white font-bold text-sm mt-2">
-                {pendingBookings.length} pending
-              </p>
-            )}
+            <Calendar className="w-10 h-10 text-white mb-3" />
+            <h3 className="text-xl font-bold">Manage Bookings</h3>
+            <p className="text-white/90 text-sm mt-1">
+              Review & manage bookings
+            </p>
           </a>
 
           <a
             href="#/admin/users"
-            className="relative rounded-2xl p-6 shadow-lg bg-white hover:bg-purple-50 transition transform hover:-translate-y-1"
+            className="group rounded-2xl p-6 shadow-lg bg-gradient-to-br from-green-500 to-emerald-600 text-white hover:-translate-y-2 transition-all"
           >
-            <div className="w-14 h-14 bg-purple-100 rounded-2xl flex items-center justify-center mb-4">
-              <UserIcon className="w-8 h-8 text-purple-600" />
-            </div>
-            <h3 className="text-xl font-black mb-2">Manage Users</h3>
-            <p className="text-sm text-gray-600">Review platform users</p>
+            <UserIcon className="w-10 h-10 text-white mb-3" />
+            <h3 className="text-xl font-bold">Manage Users</h3>
+            <p className="text-white/90 text-sm mt-1">View platform users</p>
           </a>
 
           <a
             href="#/admin/services"
-            className="relative rounded-2xl p-6 shadow-lg bg-white hover:bg-pink-50 transition transform hover:-translate-y-1"
+            className="group rounded-2xl p-6 shadow-lg bg-gradient-to-br from-pink-500 to-red-500 text-white hover:-translate-y-2 transition-all"
           >
-            <div className="w-14 h-14 bg-pink-100 rounded-2xl flex items-center justify-center mb-4">
-              <Layers className="w-8 h-8 text-pink-600" />
-            </div>
-            <h3 className="text-xl font-black mb-2">Manage Services</h3>
-            <p className="text-sm text-gray-600">Approve or reject services</p>
+            <Layers className="w-10 h-10 text-white mb-3" />
+            <h3 className="text-xl font-bold">Manage Services</h3>
+            <p className="text-white/90 text-sm mt-1">Approve services</p>
           </a>
 
           <a
             href="#/admin/complaints"
-            className="relative rounded-2xl p-6 shadow-lg bg-white hover:bg-purple-50 transition transform hover:-translate-y-1"
+            className="group rounded-2xl p-6 shadow-lg bg-gradient-to-br from-orange-500 to-rose-600 text-white hover:-translate-y-2 transition-all"
           >
-            <div className="w-14 h-14 bg-purple-100 rounded-2xl flex items-center justify-center mb-4">
-              <Shield className="w-8 h-8 text-purple-600" />
-            </div>
-            <h3 className="text-xl font-black mb-2">Complaints</h3>
-            <p className="text-sm text-gray-600">Manage complaints</p>
+            <Shield className="w-10 h-10 text-white mb-3" />
+            <h3 className="text-xl font-bold">Complaints</h3>
+            <p className="text-white/90 text-sm mt-1">Handle complaints</p>
           </a>
         </div>
 
-        {/* Platform Intelligence */}
-        <div className="mt-10">
-          <h2 className="text-3xl font-black text-black mb-2">
-            Platform Intelligence
-          </h2>
-          <p className="text-gray-600 mb-6">AI algorithms powering LocalSewa</p>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        {/* ===================== PLATFORM INTELLIGENCE ======================= */}
+        <div>
+          <h2 className="text-3xl font-bold mb-4">Platform Intelligence</h2>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-16">
             {algorithms.map(({ title, description, icon: Icon, badge }) => (
               <div
                 key={title}
-                className="relative rounded-2xl p-6 shadow-lg bg-white overflow-hidden hover:shadow-2xl transition transform hover:-translate-y-1"
+                className="rounded-2xl p-6 shadow bg-white border hover:-translate-y-2 hover:shadow-xl transition"
               >
                 <div className="flex items-center gap-3 mb-4">
-                  <div className="w-12 h-12 bg-pink-100 rounded-xl flex items-center justify-center">
-                    <Icon className="w-7 h-7 text-pink-600" />
+                  <div className="w-12 h-12 bg-purple-100 rounded-xl flex items-center justify-center">
+                    <Icon className="w-7 h-7 text-purple-600" />
                   </div>
-                  <span className="px-3 py-1 text-xs font-bold rounded-full bg-pink-600 text-white">
+                  <span className="px-3 py-1 text-xs font-semibold rounded-full bg-purple-600 text-white">
                     {badge}
                   </span>
                 </div>
-                <h3 className="text-xl font-black text-black mb-3">{title}</h3>
-                <p className="text-sm text-gray-600 leading-relaxed">
-                  {description}
-                </p>
+
+                <h3 className="text-xl font-bold mb-2">{title}</h3>
+                <p className="text-gray-600 text-sm">{description}</p>
               </div>
             ))}
           </div>
