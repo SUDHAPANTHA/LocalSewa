@@ -41,9 +41,13 @@ function App() {
     if (currentHash === "#/" || currentHash === "#/login" || currentHash === "#/register") {
       try {
         const user = JSON.parse(storedUser);
-        if (user.role === "admin") return "#/admin/dashboard";
-        if (user.role === "service_provider") return "#/vendor/dashboard";
-        if (user.role === "user") return "#/user/dashboard";
+        let dashboardPath = "/user/dashboard";
+        if (user.role === "admin") dashboardPath = "/admin/dashboard";
+        else if (user.role === "service_provider") dashboardPath = "/vendor/dashboard";
+        
+        // Use replace to avoid adding to history
+        window.location.replace(window.location.origin + "/#" + dashboardPath);
+        return "#" + dashboardPath;
       } catch (e) {
         // Invalid user data, clear it
         localStorage.removeItem("user");
