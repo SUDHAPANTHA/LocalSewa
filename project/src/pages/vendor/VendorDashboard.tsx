@@ -161,91 +161,108 @@ export function VendorDashboard() {
       {ToastComponent}
 
       <div className="max-w-6xl mx-auto my-12 px-4 md:px-0">
-        {/* Hero */}
-        <motion.header
-          initial={{ opacity: 0, y: -12 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5 }}
-          className="relative rounded-3xl overflow-hidden mb-8"
-        >
-          <div className="absolute inset-0 bg-gradient-to-br from-purple-700 via-indigo-700 to-black opacity-95" />
-          <div className="absolute -left-28 -top-28 w-96 h-96 bg-purple-400/20 rounded-full filter blur-3xl" />
-          <div className="relative z-10 p-8 md:p-12 flex flex-col md:flex-row items-start gap-6">
-            <div className="flex-1">
-              <h1 className="text-4xl md:text-5xl font-extrabold text-white leading-tight">
-                Provider Hub
-              </h1>
-              <p className="mt-2 text-purple-100">Welcome back, {user?.name}</p>
-
-              <div className="mt-6 flex gap-3 flex-wrap">
-                <motion.button
-                  whileHover={{ scale: 1.02 }}
-                  whileTap={{ scale: 0.98 }}
-                  className="px-4 py-2 rounded-lg bg-white/10 border border-white/20 text-white font-semibold"
-                >
-                  Quick actions
-                </motion.button>
-                <motion.button
-                  whileHover={{ scale: 1.02 }}
-                  whileTap={{ scale: 0.98 }}
-                  className="px-4 py-2 rounded-lg bg-white text-black font-semibold"
-                >
-                  View my profile
-                </motion.button>
-              </div>
+        {/* Hero - Matching Admin Dashboard Style */}
+        <div className="bg-gradient-to-br from-purple-600 to-black rounded-3xl shadow-2xl p-10 mb-8 relative overflow-hidden">
+          <div className="absolute top-0 right-0 w-96 h-96 bg-purple-500/20 rounded-full blur-3xl -mr-48 -mt-48"></div>
+          <div className="relative z-10 flex items-center gap-5">
+            <div className="w-16 h-16 bg-white/10 rounded-2xl flex items-center justify-center backdrop-blur-sm border border-white/20">
+              <Briefcase className="w-10 h-10 text-white" />
             </div>
-
-            <div className="w-full md:w-72">
-              <div className="bg-white/5 border border-white/10 rounded-2xl p-4 shadow-inner">
-                <p className="text-xs text-white/70 uppercase tracking-wider">
-                  CV status
-                </p>
-                <div className="mt-2 flex items-center justify-between">
-                  <div>
-                    <p className="font-bold text-white">{cvBadge.label}</p>
-                    <p className="text-xs text-white/60">{cvBadge.helper}</p>
-                  </div>
-                  <div className="text-sm">
-                    <span
-                      className={`px-3 py-1 rounded-full text-xs font-semibold ${cvBadge.badge}`}
-                    >
-                      {currentCvStatus}
-                    </span>
-                  </div>
-                </div>
-              </div>
+            <div>
+              <h1 className="text-5xl font-black text-white mb-2">Provider Hub</h1>
+              <p className="text-purple-100 text-lg">Welcome back, {user?.name}</p>
             </div>
           </div>
-        </motion.header>
-
-        {/* Metrics */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-          <motion.div
-            initial={{ opacity: 0, y: 8 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.05 }}
-            className="bg-gradient-to-br from-white/6 to-white/3 rounded-2xl p-6 shadow-lg border border-white/6 backdrop-blur"
-          >
-            <div className="flex items-start gap-4">
-              <div className="p-3 rounded-xl bg-purple-50">
-                <Briefcase className="w-8 h-8 text-black" />
-              </div>
+          
+          {/* CV Status Card */}
+          <div className="mt-6 bg-white/10 border border-white/20 rounded-2xl p-4 backdrop-blur-sm">
+            <p className="text-xs text-white/70 uppercase tracking-wider mb-2">CV Status</p>
+            <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-black uppercase tracking-wide">
-                  Services
-                </p>
-                <motion.h3
-                  className="text-3xl font-extrabold text-black mt-1"
-                  animate={{ scale: [1, 1.02, 1] }}
-                  transition={{ repeat: Infinity, duration: 3 }}
-                >
-                  {services.length}
-                </motion.h3>
-                <p className="text-xs text-black mt-1">Total active services</p>
+                <p className="font-bold text-white">{cvBadge.label}</p>
+                <p className="text-xs text-white/60">{cvBadge.helper}</p>
               </div>
+              <span className={`px-3 py-1 rounded-full text-xs font-semibold ${cvBadge.badge}`}>
+                {currentCvStatus}
+              </span>
             </div>
-          </motion.div>
+          </div>
+        </div>
 
+        {/* Stats Cards - Matching Admin Dashboard Style */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+          <div className="bg-white rounded-2xl shadow-lg p-8 border-2 border-black">
+            <Briefcase className="w-10 h-10 text-purple-600 mb-4" />
+            <h3 className="text-4xl font-black text-black mb-2">{services.length}</h3>
+            <p className="text-gray-600 text-sm uppercase tracking-wider">Total Services</p>
+          </div>
+
+          <div className="bg-black rounded-2xl shadow-lg p-8 text-white border border-purple-900/20">
+            <Calendar className="w-10 h-10 text-purple-400 mb-4" />
+            <h3 className="text-4xl font-black mb-2">{bookings.length}</h3>
+            <p className="text-gray-400 text-sm uppercase tracking-wider">Total Bookings</p>
+            <p className="text-xs text-purple-400 mt-2 font-semibold">{pendingBookings.length} pending</p>
+          </div>
+
+          <div className="bg-purple-600 rounded-2xl shadow-lg p-8 text-white">
+            <ShieldCheck className="w-10 h-10 text-purple-200 mb-4" />
+            <h3 className="text-4xl font-black mb-2">{providerProfile?.smartScore ? (providerProfile.smartScore * 100).toFixed(0) : '0'}%</h3>
+            <p className="text-purple-100 text-sm uppercase tracking-wider">Smart Score</p>
+          </div>
+        </div>
+
+        {/* Quick Actions - Matching Admin Dashboard Style */}
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+          <a
+            href="#/vendor/services"
+            className="group bg-white border-2 border-black rounded-2xl shadow-lg p-8 hover:bg-black hover:text-white transition-all duration-300 transform hover:-translate-y-1 no-underline"
+          >
+            <div className="w-14 h-14 bg-purple-100 group-hover:bg-purple-600 rounded-2xl flex items-center justify-center mb-4 transition-all duration-300">
+              <Briefcase className="w-8 h-8 text-purple-600 group-hover:text-white transition-colors duration-300" />
+            </div>
+            <h3 className="text-xl font-black mb-2 group-hover:text-white transition-colors duration-300">My Services</h3>
+            <p className="text-gray-600 group-hover:text-gray-300 transition-colors duration-300 text-sm">Manage your services</p>
+          </a>
+
+          <a
+            href="#/vendor/bookings"
+            className="bg-purple-600 text-white rounded-2xl shadow-lg p-8 hover:bg-purple-700 transition-all duration-300 transform hover:-translate-y-1 no-underline"
+          >
+            <div className="w-14 h-14 bg-white/20 rounded-2xl flex items-center justify-center mb-4">
+              <Calendar className="w-8 h-8 text-white" />
+            </div>
+            <h3 className="text-xl font-black mb-2">Bookings</h3>
+            <p className="text-purple-100 text-sm">Review and manage</p>
+            {pendingBookings.length > 0 && (
+              <p className="mt-3 text-white font-bold text-sm">{pendingBookings.length} pending</p>
+            )}
+          </a>
+
+          <a
+            href="#/vendor/chat"
+            className="group bg-white border-2 border-black rounded-2xl shadow-lg p-8 hover:bg-black hover:text-white transition-all duration-300 transform hover:-translate-y-1 no-underline"
+          >
+            <div className="w-14 h-14 bg-purple-100 group-hover:bg-purple-600 rounded-2xl flex items-center justify-center mb-4 transition-all duration-300">
+              <MessageCircle className="w-8 h-8 text-purple-600 group-hover:text-white transition-colors duration-300" />
+            </div>
+            <h3 className="text-xl font-black mb-2 group-hover:text-white transition-colors duration-300">Messages</h3>
+            <p className="text-gray-600 group-hover:text-gray-300 transition-colors duration-300 text-sm">Chat with customers</p>
+          </a>
+
+          <a
+            href="#/vendor/complaints"
+            className="group bg-white border-2 border-black rounded-2xl shadow-lg p-8 hover:bg-black hover:text-white transition-all duration-300 transform hover:-translate-y-1 no-underline"
+          >
+            <div className="w-14 h-14 bg-purple-100 group-hover:bg-purple-600 rounded-2xl flex items-center justify-center mb-4 transition-all duration-300">
+              <AlertCircle className="w-8 h-8 text-purple-600 group-hover:text-white transition-colors duration-300" />
+            </div>
+            <h3 className="text-xl font-black mb-2 group-hover:text-white transition-colors duration-300">Complaints</h3>
+            <p className="text-gray-600 group-hover:text-gray-300 transition-colors duration-300 text-sm">View feedback</p>
+          </a>
+        </div>
+
+        {/* Continue with rest of content */}
+        <div className="grid grid-cols-1 md:grid-cols-1 gap-6 mb-8">
           <motion.div
             initial={{ opacity: 0, y: 8 }}
             animate={{ opacity: 1, y: 0 }}

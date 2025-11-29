@@ -23,64 +23,61 @@ import { VendorComplaints } from "./pages/vendor/VendorComplaints";
 import { Chat } from "./pages/Chat";
 
 function App() {
-  // Check if session is fresh (new tab or browser restart)
   const getInitialPath = () => {
-    const lastActivity = sessionStorage.getItem("lastActivity");
     const storedUser = localStorage.getItem("user");
-    const now = Date.now();
-    const fiveMinutes = 5 * 60 * 1000;
+    const currentHash = window.location.hash || "#/";
 
-    // If user is logged in, keep current hash or redirect to appropriate dashboard
-    if (storedUser) {
-      sessionStorage.setItem("lastActivity", now.toString());
-      const currentHash = window.location.hash || "#/";
-      
-      // If on homepage or login/register, redirect to dashboard
-      if (currentHash === "#/" || currentHash === "#/login" || currentHash === "#/register") {
-        try {
-          const user = JSON.parse(storedUser);
-          if (user.role === "admin") return "#/admin/dashboard";
-          if (user.role === "service_provider") return "#/vendor/dashboard";
-          if (user.role === "user") return "#/user/dashboard";
-        } catch (e) {
-          return currentHash;
-        }
+    // If NOT logged in, always start at homepage
+    if (!storedUser) {
+      // Clear any hash and go to homepage
+      if (currentHash !== "#/" && currentHash !== "#/login" && currentHash !== "#/register") {
+        window.location.hash = "/";
+        return "#/";
       }
       return currentHash;
     }
 
-    // If no recent activity (new tab/session) and not logged in, go to homepage
-    if (!lastActivity || now - parseInt(lastActivity) > fiveMinutes) {
-      sessionStorage.setItem("lastActivity", now.toString());
-      return "#/";
+    // If logged in and on homepage/login/register, redirect to dashboard
+    if (currentHash === "#/" || currentHash === "#/login" || currentHash === "#/register") {
+      try {
+        const user = JSON.parse(storedUser);
+        if (user.role === "admin") return "#/admin/dashboard";
+        if (user.role === "service_provider") return "#/vendor/dashboard";
+        if (user.role === "user") return "#/user/dashboard";
+      } catch (e) {
+        // Invalid user data, clear it
+        localStorage.removeItem("user");
+        window.location.hash = "/";
+        return "#/";
+      }
     }
 
-    // Recent activity, keep current hash
-    sessionStorage.setItem("lastActivity", now.toString());
-    return window.location.hash || "#/";
+    // Logged in, use current hash
+    return currentHash;
   };
 
   const [currentPath, setCurrentPath] = useState(getInitialPath());
 
+  // On mount, ensure we're on the correct page
   useEffect(() => {
-    // Update last activity on any interaction
-    const updateActivity = () => {
-      sessionStorage.setItem("lastActivity", Date.now().toString());
-    };
+    const storedUser = localStorage.getItem("user");
+    const currentHash = window.location.hash || "#/";
 
-    window.addEventListener("click", updateActivity);
-    window.addEventListener("keydown", updateActivity);
-
-    return () => {
-      window.removeEventListener("click", updateActivity);
-      window.removeEventListener("keydown", updateActivity);
-    };
+    // If not logged in and on a protected route, go to homepage
+    if (!storedUser) {
+      const protectedRoutes = ['/user/', '/vendor/', '/admin/'];
+      const isProtected = protectedRoutes.some(route => currentHash.includes(route));
+      
+      if (isProtected) {
+        window.location.hash = "/";
+        setCurrentPath("#/");
+      }
+    }
   }, []);
 
   useEffect(() => {
     const handleHashChange = () => {
       setCurrentPath(window.location.hash || "#/");
-      sessionStorage.setItem("lastActivity", Date.now().toString());
     };
 
     window.addEventListener("hashchange", handleHashChange);

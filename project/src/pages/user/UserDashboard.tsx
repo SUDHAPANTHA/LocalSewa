@@ -3,7 +3,7 @@ import { Layout } from "../../components/Layout";
 import { useAuth } from "../../context/AuthContext";
 import { bookingsApi } from "../../api/bookings";
 import { Booking } from "../../types";
-import { Calendar, CheckCircle, Clock, Shield, Search, MessageCircle, Sparkles, TrendingUp, Package, AlertCircle } from "lucide-react";
+import { Calendar, CheckCircle, Clock, Shield, Search, MessageCircle, Sparkles, TrendingUp, Package, AlertCircle, User } from "lucide-react";
 
 export function UserDashboard() {
   const { user } = useAuth();
