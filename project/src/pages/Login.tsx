@@ -22,30 +22,24 @@ export function Login() {
 
     try {
       let response;
-      if (role === "user") {
+
+      if (role === "user")
         response = await authApi.userLogin({ email, password });
-      } else if (role === "service_provider") {
+      else if (role === "service_provider")
         response = await authApi.providerLogin({ email, password });
-      } else {
-        response = await authApi.adminLogin({ email, password });
-      }
+      else response = await authApi.adminLogin({ email, password });
 
       login(response.data.data);
       showToast("Login successful!", "success");
 
-      // Small delay to ensure localStorage is updated
       setTimeout(() => {
-        // Default dashboard based on role
         let dashboardPath = "/user/dashboard";
-        if (role === "admin") {
-          dashboardPath = "/admin/dashboard";
-        } else if (role === "service_provider") {
+        if (role === "admin") dashboardPath = "/admin/dashboard";
+        else if (role === "service_provider")
           dashboardPath = "/vendor/dashboard";
-        }
-        
-        // Force redirect to dashboard without adding to history
+
         window.location.replace(window.location.origin + "/#" + dashboardPath);
-      }, 100);
+      }, 120);
     } catch (error) {
       showToast(getApiErrorMessage(error, "Login failed"), "error");
     } finally {
@@ -53,77 +47,66 @@ export function Login() {
     }
   };
 
-  const roleOptions: {
-    value: Role;
-    label: string;
-    icon: typeof User;
-    color: string;
-  }[] = [
-    { value: "user", label: "User", icon: User, color: "blue" },
-    {
-      value: "service_provider",
-      label: "Service Provider",
-      icon: Briefcase,
-      color: "green",
-    },
-    { value: "admin", label: "Admin", icon: Shield, color: "red" },
-  ];
+  const roleOptions = [
+    { value: "user", label: "User", icon: User },
+    { value: "service_provider", label: "Service Provider", icon: Briefcase },
+    { value: "admin", label: "Admin", icon: Shield },
+  ] as const;
 
   return (
     <Layout>
       {ToastComponent}
-      <div className="max-w-md mx-auto mt-12">
-        <div className="bg-white rounded-2xl shadow-xl p-8 animate-fade-in">
+
+      {/* SIMPLE CLEAN BACKGROUND */}
+      <div className="min-h-screen flex items-center justify-center bg-gray-100 px-4 py-12">
+        {/* CLEAN CARD */}
+        <div className="w-full max-w-md bg-white shadow-md rounded-2xl p-8 border border-gray-200">
+          {/* LOCAL SEWA BRANDING */}
           <div className="text-center mb-8">
-            <a href="/home">
-              {" "}
-              <LogIn className="w-16 h-16 text-purple-600 mx-auto mb-4" />{" "}
-            </a>
-            <h1 className="text-3xl font-bold text-gray-800">Welcome Back</h1>
-            <p className="text-gray-600 mt-2">Login to access your account</p>
+            <h1 className="text-2xl font-bold text-gray-800">
+              LocalSewa Login
+            </h1>
+            <p className="text-gray-500 text-sm mt-1">
+              Access your LocalSewa dashboard
+            </p>
           </div>
 
           <form onSubmit={handleLogin} className="space-y-6">
+            {/* SIMPLE ROLE SELECTOR */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-3">
+              <label className="block text-sm font-medium text-gray-700 mb-2">
                 Select Role
               </label>
+
               <div className="grid grid-cols-3 gap-3">
                 {roleOptions.map((option) => {
                   const Icon = option.icon;
+                  const selected = role === option.value;
+
                   return (
                     <button
                       key={option.value}
                       type="button"
                       onClick={() => setRole(option.value)}
-                      className={`p-4 rounded-xl border-2 transition-all ${
-                        role === option.value
-                          ? `border-${option.color}-500 bg-${option.color}-50`
-                          : "border-gray-200 hover:border-gray-300"
+                      className={`p-3 rounded-xl border flex flex-col items-center text-sm transition ${
+                        selected
+                          ? "border-[#6C4CE6] bg-[#f4f1ff]"
+                          : "border-gray-300 hover:bg-gray-100"
                       }`}
                     >
                       <Icon
-                        className={`w-6 h-6 mx-auto mb-2 ${
-                          role === option.value
-                            ? `text-${option.color}-600`
-                            : "text-gray-400"
+                        className={`w-6 h-6 mb-1 ${
+                          selected ? "text-[#6C4CE6]" : "text-gray-500"
                         }`}
                       />
-                      <span
-                        className={`text-xs font-medium ${
-                          role === option.value
-                            ? `text-${option.color}-600`
-                            : "text-gray-600"
-                        }`}
-                      >
-                        {option.label}
-                      </span>
+                      {option.label}
                     </button>
                   );
                 })}
               </div>
             </div>
 
+            {/* INPUTS */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 Email
@@ -132,8 +115,8 @@ export function Login() {
                 type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent transition"
-                placeholder="your@email.com"
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-[#6C4CE6] focus:border-[#6C4CE6] outline-none"
+                placeholder="you@example.com"
                 required
               />
             </div>
@@ -146,26 +129,28 @@ export function Login() {
                 type="password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent transition"
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-[#6C4CE6] focus:border-[#6C4CE6] outline-none"
                 placeholder="••••••••"
                 required
               />
             </div>
 
+            {/* LOCAL SEWA BUTTON */}
             <button
               type="submit"
               disabled={loading}
-              className="w-full py-3 bg-purple-600 text-white rounded-lg font-medium hover:bg-purple-700 transition disabled:opacity-50 disabled:cursor-not-allowed"
+              className="w-full py-3 bg-purple-500 text-white rounded-lg font-medium hover:bg-[#5c3dd8] transition disabled:opacity-50"
             >
               {loading ? "Logging in..." : "Login"}
             </button>
           </form>
 
-          <p className="text-center text-gray-600 mt-6">
-            Don't have an account?{" "}
+          {/* FOOTER */}
+          <p className="text-center text-gray-600 mt-6 text-sm">
+            Don’t have an account?{" "}
             <a
               href="#/register"
-              className="text-purple-600 hover:text-purple-700 font-medium"
+              className="text-purple-600 font-medium hover:underline"
             >
               Register here
             </a>

@@ -83,10 +83,6 @@ export function Register() {
       <div className="max-w-2xl mx-auto mt-12">
         <div className="bg-white rounded-2xl shadow-xl p-8 animate-fade-in">
           <div className="text-center mb-8">
-            <a href="/home">
-              {" "}
-              <UserPlus className="w-16 h-16 text-purple-600 mx-auto mb-4" />{" "}
-            </a>
             <h1 className="text-3xl font-bold text-gray-800">Create Account</h1>
             <p className="text-gray-600 mt-2">Join LocalSewa today</p>
           </div>
