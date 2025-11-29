@@ -20,14 +20,11 @@ export function AdminDashboard() {
   const [users, setUsers] = useState<User[]>([]);
   const [services, setServices] = useState<Service[]>([]);
   const [loading, setLoading] = useState(true);
-
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const abortRef = useRef<AbortController | null>(null);
 
   const fetchData = useCallback(async () => {
-    if (abortRef.current) {
-      abortRef.current.abort();
-    }
+    if (abortRef.current) abortRef.current.abort();
     const controller = new AbortController();
     abortRef.current = controller;
     setLoading(true);
@@ -42,10 +39,8 @@ export function AdminDashboard() {
         try {
           return await task(controller.signal);
         } catch (err) {
-          if (controller.signal.aborted || attempt === retries) {
-            throw err;
-          }
-          attempt += 1;
+          if (controller.signal.aborted || attempt === retries) throw err;
+          attempt++;
         }
       }
       throw new Error("Retry attempts exceeded");
@@ -61,6 +56,7 @@ export function AdminDashboard() {
           withRetry((signal) => adminApi.getAllUsers({ signal })),
           withRetry((signal) => adminApi.getAllServices({ signal })),
         ]);
+
       if (controller.signal.aborted) return;
       setProviders(providersRes.data.providers);
       setBookings(bookingsRes.data.bookings);
@@ -76,9 +72,7 @@ export function AdminDashboard() {
         )
       );
     } finally {
-      if (!controller.signal.aborted) {
-        setLoading(false);
-      }
+      if (!controller.signal.aborted) setLoading(false);
     }
   }, []);
 
@@ -132,117 +126,75 @@ export function AdminDashboard() {
     <Layout>
       <div className="max-w-6xl mx-auto animate-fade-in my-12 px-4">
         {errorMessage && (
-          <div className="mb-6 rounded-2xl bg-white px-6 py-4 text-black shadow">
+          <div className="mb-6 rounded-2xl bg-red-100 px-6 py-4 text-red-800 shadow">
             <p className="font-bold">{errorMessage}</p>
             <button
               onClick={fetchData}
-              className="mt-3 px-4 py-2 bg-pink-600 text-white rounded-lg font-bold hover:bg-pink-500 transition-all duration-300"
+              className="mt-3 px-4 py-2 bg-red-600 text-white rounded-lg font-bold hover:bg-red-500 transition-all duration-300"
             >
               Retry
             </button>
           </div>
         )}
 
-        {/* Hero header (large purple->pink gradient) */}
-        <div className="relative mb-8 rounded-3xl overflow-hidden shadow-2xl">
-          <div className="bg-gradient-to-br from-purple-700 via-pink-600 to-pink-400 p-10">
-            <div className="relative z-10 flex items-center gap-5">
-              <div className="w-16 h-16 bg-white/10 rounded-2xl flex items-center justify-center backdrop-blur-sm">
-                <Shield className="w-10 h-10 text-white" />
-              </div>
-              <div>
-                <h1 className="text-5xl font-black text-white mb-2">
-                  Admin Control
-                </h1>
-                <p className="text-pink-100 text-lg">
-                  Platform management center
-                </p>
-              </div>
-            </div>
-          </div>
-
-          {/* hero bubbles */}
-          <div className="pointer-events-none">
-            <div className="absolute -left-16 -top-12 w-56 h-56 bg-pink-500/20 rounded-full blur-3xl"></div>
-            <div className="absolute -right-20 -bottom-16 w-72 h-72 bg-purple-900/20 rounded-full blur-3xl"></div>
-          </div>
-        </div>
-
-        {/* KPI section - each card its own unique section with bg + bubbles */}
+        {/* Quick Stats - same style as user dashboard */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-          {/* Users */}
-          <section className="relative rounded-2xl p-6 shadow-lg bg-gradient-to-br from-white to-pink-50 overflow-hidden">
-            <div className="absolute -left-8 -top-6 w-36 h-36 bg-pink-200/40 rounded-full blur-2xl"></div>
-            <div className="absolute -right-8 -bottom-8 w-48 h-48 bg-pink-400/10 rounded-full blur-3xl"></div>
-
-            <UserIcon className="w-10 h-10 text-pink-600 mb-4" />
-            <h3 className="text-4xl font-black text-black mb-2">
-              {users.length}
-            </h3>
-            <p className="text-gray-600 text-sm uppercase tracking-wider">
+          <section className="relative rounded-2xl p-6 shadow-lg bg-gradient-to-br from-purple-600 to-pink-500 text-white overflow-hidden hover:shadow-2xl transform hover:-translate-y-2 transition-all duration-300">
+            <UserIcon className="w-10 h-10 text-white mb-4" />
+            <h3 className="text-4xl font-black mb-2">{users.length}</h3>
+            <p className="text-white/90 text-sm uppercase tracking-wider">
               Total Users
             </p>
           </section>
 
-          {/* Providers */}
-          <section className="relative rounded-2xl p-6 shadow-lg bg-gradient-to-br from-purple-50 via-purple-100 to-pink-50 overflow-hidden">
-            <div className="absolute -left-10 -bottom-6 w-44 h-44 bg-purple-200/30 rounded-full blur-3xl"></div>
-            <div className="absolute -right-10 -top-8 w-32 h-32 bg-pink-300/20 rounded-full blur-2xl"></div>
-
-            <Users className="w-10 h-10 text-purple-600 mb-4" />
+          <section className="relative rounded-2xl p-6 shadow-lg bg-gradient-to-br from-green-400 to-emerald-500 text-white overflow-hidden hover:shadow-2xl transform hover:-translate-y-2 transition-all duration-300">
+            <Users className="w-10 h-10 text-white mb-4" />
             <h3 className="text-4xl font-black mb-2">{providers.length}</h3>
-            <p className="text-gray-600 text-sm uppercase tracking-wider">
+            <p className="text-white/90 text-sm uppercase tracking-wider">
               Total Providers
             </p>
-            <p className="text-xs text-purple-600 mt-2 font-semibold">
-              {pendingProviders.length} pending
-            </p>
+            {pendingProviders.length > 0 && (
+              <p className="text-white font-semibold text-sm mt-2">
+                {pendingProviders.length} pending
+              </p>
+            )}
           </section>
 
-          {/* Services */}
-          <section className="relative rounded-2xl p-6 shadow-lg text-white bg-gradient-to-br from-purple-600 to-pink-500 overflow-hidden">
-            <div className="absolute -left-14 -top-8 w-48 h-48 bg-pink-600/20 rounded-full blur-3xl"></div>
-            <div className="absolute -right-12 -bottom-6 w-40 h-40 bg-purple-900/20 rounded-full blur-3xl"></div>
-
+          <section className="relative rounded-2xl p-6 shadow-lg bg-gradient-to-br from-purple-700 to-pink-500 text-white overflow-hidden hover:shadow-2xl transform hover:-translate-y-2 transition-all duration-300">
             <Layers className="w-10 h-10 text-white mb-4" />
             <h3 className="text-4xl font-black mb-2">{services.length}</h3>
-            <p className="text-pink-100 text-sm uppercase tracking-wider">
+            <p className="text-white/90 text-sm uppercase tracking-wider">
               Active Services
             </p>
           </section>
 
-          {/* Bookings */}
-          <section className="relative rounded-2xl p-6 shadow-lg bg-gradient-to-br from-white to-purple-50 overflow-hidden">
-            <div className="absolute -left-8 -bottom-10 w-44 h-44 bg-purple-300/20 rounded-full blur-3xl"></div>
-            <div className="absolute -right-6 -top-8 w-36 h-36 bg-pink-200/20 rounded-full blur-2xl"></div>
-
-            <Calendar className="w-10 h-10 text-pink-600 mb-4" />
-            <h3 className="text-4xl font-black text-black mb-2">
-              {bookings.length}
-            </h3>
-            <p className="text-gray-600 text-sm uppercase tracking-wider">
+          <section className="relative rounded-2xl p-6 shadow-lg bg-gradient-to-br from-blue-500 to-indigo-600 text-white overflow-hidden hover:shadow-2xl transform hover:-translate-y-2 transition-all duration-300">
+            <Calendar className="w-10 h-10 text-white mb-4" />
+            <h3 className="text-4xl font-black mb-2">{bookings.length}</h3>
+            <p className="text-white/90 text-sm uppercase tracking-wider">
               Total Bookings
             </p>
-            <p className="text-xs text-pink-600 mt-2 font-semibold">
-              {pendingBookings.length} pending
-            </p>
+            {pendingBookings.length > 0 && (
+              <p className="text-white font-semibold text-sm mt-2">
+                {pendingBookings.length} pending
+              </p>
+            )}
           </section>
         </div>
 
-        {/* Action tiles - each tile styled uniquely with subtle bubbles */}
-        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-5 gap-6">
+        {/* Action Cards */}
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-5 gap-6 mb-8">
           <a
             href="#/admin/providers"
-            className="relative rounded-2xl p-6 shadow-lg no-underline bg-white hover:bg-pink-50 transition transform hover:-translate-y-1"
+            className="relative rounded-2xl p-6 shadow-lg bg-white hover:bg-purple-50 transition transform hover:-translate-y-1"
           >
-            <div className="absolute -left-10 -top-6 w-32 h-32 bg-pink-100/40 rounded-full blur-2xl"></div>
-            <div className="w-14 h-14 bg-pink-100 rounded-2xl flex items-center justify-center mb-4">
-              <Users className="w-8 h-8 text-pink-600" />
+            <div className="w-14 h-14 bg-purple-100 rounded-2xl flex items-center justify-center mb-4">
+              <Users className="w-8 h-8 text-purple-600" />
             </div>
             <h3 className="text-xl font-black mb-2">Manage Providers</h3>
             <p className="text-sm text-gray-600">Approve or reject providers</p>
             {pendingProviders.length > 0 && (
-              <p className="mt-3 text-pink-600 font-bold text-sm">
+              <p className="text-purple-600 font-bold text-sm mt-2">
                 {pendingProviders.length} pending
               </p>
             )}
@@ -250,16 +202,15 @@ export function AdminDashboard() {
 
           <a
             href="#/admin/bookings"
-            className="relative rounded-2xl p-6 shadow-lg no-underline bg-gradient-to-br from-purple-600 to-pink-500 text-white hover:from-purple-700 hover:to-pink-600 transform hover:-translate-y-1 transition"
+            className="relative rounded-2xl p-6 shadow-lg bg-gradient-to-br from-purple-600 to-pink-500 text-white hover:from-purple-700 hover:to-pink-600 transform hover:-translate-y-1 transition"
           >
-            <div className="absolute -right-8 -top-8 w-40 h-40 bg-white/10 rounded-full blur-2xl"></div>
             <div className="w-14 h-14 bg-white/20 rounded-2xl flex items-center justify-center mb-4">
               <Calendar className="w-8 h-8 text-white" />
             </div>
             <h3 className="text-xl font-black mb-2">Manage Bookings</h3>
-            <p className="text-sm">Review and manage bookings</p>
+            <p className="text-sm text-white/90">Review and manage bookings</p>
             {pendingBookings.length > 0 && (
-              <p className="mt-3 text-white font-bold text-sm">
+              <p className="text-white font-bold text-sm mt-2">
                 {pendingBookings.length} pending
               </p>
             )}
@@ -267,9 +218,8 @@ export function AdminDashboard() {
 
           <a
             href="#/admin/users"
-            className="relative rounded-2xl p-6 shadow-lg no-underline bg-white hover:bg-purple-50 transition transform hover:-translate-y-1"
+            className="relative rounded-2xl p-6 shadow-lg bg-white hover:bg-purple-50 transition transform hover:-translate-y-1"
           >
-            <div className="absolute -left-8 -bottom-8 w-36 h-36 bg-purple-100/30 rounded-full blur-2xl"></div>
             <div className="w-14 h-14 bg-purple-100 rounded-2xl flex items-center justify-center mb-4">
               <UserIcon className="w-8 h-8 text-purple-600" />
             </div>
@@ -279,9 +229,8 @@ export function AdminDashboard() {
 
           <a
             href="#/admin/services"
-            className="relative rounded-2xl p-6 shadow-lg no-underline bg-white hover:bg-pink-50 transition transform hover:-translate-y-1"
+            className="relative rounded-2xl p-6 shadow-lg bg-white hover:bg-pink-50 transition transform hover:-translate-y-1"
           >
-            <div className="absolute -right-8 -bottom-8 w-36 h-36 bg-pink-100/30 rounded-full blur-2xl"></div>
             <div className="w-14 h-14 bg-pink-100 rounded-2xl flex items-center justify-center mb-4">
               <Layers className="w-8 h-8 text-pink-600" />
             </div>
@@ -291,9 +240,8 @@ export function AdminDashboard() {
 
           <a
             href="#/admin/complaints"
-            className="relative rounded-2xl p-6 shadow-lg no-underline bg-white hover:bg-purple-50 transition transform hover:-translate-y-1"
+            className="relative rounded-2xl p-6 shadow-lg bg-white hover:bg-purple-50 transition transform hover:-translate-y-1"
           >
-            <div className="absolute -left-10 -top-6 w-36 h-36 bg-purple-200/30 rounded-full blur-2xl"></div>
             <div className="w-14 h-14 bg-purple-100 rounded-2xl flex items-center justify-center mb-4">
               <Shield className="w-8 h-8 text-purple-600" />
             </div>
@@ -304,19 +252,16 @@ export function AdminDashboard() {
 
         {/* Platform Intelligence */}
         <div className="mt-10">
-          <div className="mb-6">
-            <h2 className="text-3xl font-black text-black mb-2">
-              Platform Intelligence
-            </h2>
-            <p className="text-gray-600">AI algorithms powering LocalSewa</p>
-          </div>
+          <h2 className="text-3xl font-black text-black mb-2">
+            Platform Intelligence
+          </h2>
+          <p className="text-gray-600 mb-6">AI algorithms powering LocalSewa</p>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             {algorithms.map(({ title, description, icon: Icon, badge }) => (
               <div
                 key={title}
-                className="relative rounded-2xl p-6 shadow-lg bg-white overflow-hidden"
+                className="relative rounded-2xl p-6 shadow-lg bg-white overflow-hidden hover:shadow-2xl transition transform hover:-translate-y-1"
               >
-                <div className="absolute -left-8 -top-6 w-32 h-32 bg-pink-100/30 rounded-full blur-2xl"></div>
                 <div className="flex items-center gap-3 mb-4">
                   <div className="w-12 h-12 bg-pink-100 rounded-xl flex items-center justify-center">
                     <Icon className="w-7 h-7 text-pink-600" />

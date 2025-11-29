@@ -55,6 +55,8 @@ export interface BookingStatusEntry {
 }
 
 export interface Service {
+  locality: boolean | undefined;
+  locality: any;
   _id: string;
   name: string;
   description: string;

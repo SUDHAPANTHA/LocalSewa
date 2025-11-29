@@ -738,20 +738,21 @@ export function Services() {
   // Filter services based on search query and locality
   let filteredServices = allServices;
 
-  // If locality is selected, show only NEAREST services (within 10km radius)
+  // Step 1: Filter by locality/distance if selected
   if (selectedArea) {
-    const MAX_DISTANCE_KM = 10; // Only show services within 10km
+    const MAX_DISTANCE_KM = 3; // Only show services within 3km
 
     filteredServices = allServices.filter((service) => {
       const distance = getServiceDistance(service);
-      // Include services with distance <= 10km, or services without distance data
+      // Include services with distance <= 3km, or services without distance data
       return distance === null || distance <= MAX_DISTANCE_KM;
     });
-  } else {
-    // No locality selected, filter by search query
-    filteredServices = allServices.filter((service) => {
-      if (!searchQuery.trim()) return true;
-      const query = searchQuery.toLowerCase();
+  }
+
+  // Step 2: Apply search query filter (works with or without locality)
+  if (searchQuery.trim()) {
+    const query = searchQuery.toLowerCase();
+    filteredServices = filteredServices.filter((service) => {
       const nameMatch = service.name.toLowerCase().includes(query);
       const descMatch = service.description.toLowerCase().includes(query);
       const catMatch = service.category.toLowerCase().includes(query);
@@ -1146,14 +1147,31 @@ export function Services() {
                           </span>
                         );
                       }
+                      // Show area name even without distance
                       if (areaName) {
                         return (
-                          <span className="flex items-center gap-1">
+                          <span className="flex items-center gap-1 text-slate-600">
                             <MapPin className="w-4 h-4 text-blue-500" />
                             {areaName}
                           </span>
                         );
                       }
+                      
+                      // Fallback: try to get location from provider
+                      const provider = typeof service.provider === "object" ? service.provider : null;
+                      const providerLocation = (provider as any)?.location?.formattedAddress || 
+                                              (provider as any)?.location?.locality ||
+                                              (provider as any)?.address;
+                      
+                      if (providerLocation) {
+                        return (
+                          <span className="flex items-center gap-1 text-slate-600">
+                            <MapPin className="w-4 h-4 text-slate-400" />
+                            {providerLocation}
+                          </span>
+                        );
+                      }
+                      
                       return null;
                     })()}
                   </div>
