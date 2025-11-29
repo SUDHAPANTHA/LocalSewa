@@ -1715,6 +1715,7 @@ app.delete("/provider/:id/cv", async (req, res) => {
     provider.cvReviewedAt = undefined;
     provider.cvReviewer = undefined;
     provider.isApproved = false;
+    provider.smartScore = 0;
 
     await provider.save();
 
