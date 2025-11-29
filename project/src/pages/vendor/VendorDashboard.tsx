@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { Layout } from "../../components/Layout";
+import { Modal } from "../../components/Modal";
 import { useAuth } from "../../context/AuthContext";
 import { servicesApi } from "../../api/services";
 import { bookingsApi } from "../../api/bookings";
@@ -37,6 +38,7 @@ export function VendorDashboard() {
   const [selectedCvFile, setSelectedCvFile] = useState<File | null>(null);
   const [cvUploading, setCvUploading] = useState(false);
   const [cvUploadProgress, setCvUploadProgress] = useState(0);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
 
   /** Fetch initial data */
   useEffect(() => {
@@ -110,7 +112,8 @@ export function VendorDashboard() {
   const deleteCv = async (id: string) => {
     try {
       await providerApi.deleteCv(id);
-      showToast("CV deleted", "success");
+      showToast("CV deleted successfully", "success");
+      setShowDeleteModal(false);
       fetchData(id);
     } catch (err) {
       showToast("Failed to delete CV", "error");
@@ -300,11 +303,7 @@ export function VendorDashboard() {
                     View CV
                   </a>
                   <button
-                    onClick={() => {
-                      if (user?.id && confirm("Are you sure you want to delete your CV? This cannot be undone.")) {
-                        deleteCv(user.id);
-                      }
-                    }}
+                    onClick={() => setShowDeleteModal(true)}
                     className="flex items-center gap-2 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition font-medium shadow-sm"
                   >
                     <Trash2 className="w-4 h-4" />
@@ -372,6 +371,36 @@ export function VendorDashboard() {
           </div>
         </div>
       </div>
+
+      {/* Delete CV Confirmation Modal */}
+      <Modal
+        isOpen={showDeleteModal}
+        onClose={() => setShowDeleteModal(false)}
+        title="Delete CV"
+      >
+        <div className="space-y-4">
+          <p className="text-gray-700">
+            Are you sure you want to delete your CV? This action cannot be undone.
+          </p>
+          <p className="text-sm text-gray-600">
+            Your smart score will be reset to 0% and you'll need to upload a new CV to get verified again.
+          </p>
+          <div className="flex gap-3 justify-end mt-6">
+            <button
+              onClick={() => setShowDeleteModal(false)}
+              className="px-6 py-2 rounded-lg border border-gray-300 text-gray-700 hover:bg-gray-50 transition font-medium"
+            >
+              Cancel
+            </button>
+            <button
+              onClick={() => user?.id && deleteCv(user.id)}
+              className="px-6 py-2 rounded-lg bg-red-600 text-white hover:bg-red-700 transition font-medium"
+            >
+              Delete CV
+            </button>
+          </div>
+        </div>
+      </Modal>
     </Layout>
   );
 }
